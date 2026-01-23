@@ -149,6 +149,7 @@ export default function StreakCalendarScreen() {
                     status === 'completed' && styles.dayTextCompleted,
                     status === 'break' && styles.dayTextBreak,
                     isCurrentDay && styles.dayTextToday,
+                    isCurrentDay && status === 'completed' &&  styles.dayCompleteTextToday,
                   ]}
                 >
                   {format(date, 'd')}
@@ -273,6 +274,7 @@ const styles = StyleSheet.create({
   dayCellCompleted: {
     backgroundColor: COLORS.accent,
     borderRadius: BORDER_RADIUS.sm,
+    
   },
   dayCellBreak: {
     backgroundColor: COLORS.warning + '40',
@@ -298,10 +300,15 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontWeight: '700',
   },
+  dayCompleteTextToday:{
+    color: COLORS.background,
+    fontWeight: '700',
+  },
   checkmark: {
     position: 'absolute',
     top: 2,
     right: 2,
+    
   },
   checkmarkText: {
     fontSize: 10,

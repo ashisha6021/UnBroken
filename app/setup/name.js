@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { saveUser } from '../../storage/storage-sqlite';
@@ -27,28 +37,37 @@ export default function NameScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>What should we call you?</Text>
-        <Text style={styles.subtitle}>
-          Enter your name to personalize your Unbroken experience.
-        </Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>What should we call you?</Text>
+          <Text style={styles.subtitle}>
+            Enter your name to personalize your Unbroken experience.
+          </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Your name"
-          placeholderTextColor={COLORS.textMuted}
-          value={name}
-          onChangeText={setName}
-          autoFocus={true}
-          autoCapitalize="words"
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Your name"
+            placeholderTextColor={COLORS.textMuted}
+            value={name}
+            onChangeText={setName}
+            autoFocus
+            autoCapitalize="words"
+            returnKeyType="done"
+          />
 
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>CONTINUE</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <TouchableOpacity style={styles.button} onPress={handleContinue}>
+            <Text style={styles.buttonText}>CONTINUE</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

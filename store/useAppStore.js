@@ -1,15 +1,22 @@
 import { create } from 'zustand';
 import { initDatabase } from '../storage/database';
-import { getUser, saveUser, getLongGoals, getShortGoals, getTasks } from '../storage/storage-sqlite';
+import {
+  getUser,
+  saveUser,
+  getLongGoals,
+  getShortGoals,
+  getTasks,
+} from '../storage/storage-sqlite';
 import { calculateStreak } from '../utils/streak';
-import { getTodayProgress } from '../utils/progress';
+import { calculateTodayProgress } from '../service/progressService';
 
-// Track if initialization is in progress at module level
 let isInitializing = false;
 let initPromise = null;
 
 export const useAppStore = create((set, get) => ({
-  // State
+  // --------------------
+  // STATE
+  // --------------------
   user: null,
   longGoals: [],
   shortGoals: [],
@@ -17,32 +24,28 @@ export const useAppStore = create((set, get) => ({
   todayProgress: null,
   streak: null,
   isLoading: true,
-  
-  // Actions
+  taskAlarms: {},        // taskId -> alarms[]
+  alarmSettings: {},    // taskId -> settings
+
+  // --------------------
+  // INITIALIZATION
+  // --------------------
   initializeApp: async () => {
-    // If already initializing, return the existing promise
+    console.log('[Store] initializeApp called');
     if (isInitializing && initPromise) {
-      console.log('[Store] Initialization already in progress, waiting...');
       return initPromise;
     }
-    
-    // Start new initialization
+
     isInitializing = true;
-    console.log('[Store] Starting initialization...');
     set({ isLoading: true });
-    
+
     initPromise = (async () => {
       try {
-        console.log('[Store] Starting app initialization...');
-        
-        // Initialize SQLite database first
+        // 1️⃣ Init DB
         await initDatabase();
-        console.log('[Store] Database initialized');
-        
+
+        // 2️⃣ Load or create user
         let user = await getUser();
-        console.log('[Store] User fetched:', user ? 'exists' : 'not found');
-        
-        // Create default user if none exists
         if (!user) {
           user = {
             id: Date.now().toString(),
@@ -51,35 +54,23 @@ export const useAppStore = create((set, get) => ({
             hasCompletedSetup: false,
           };
           await saveUser(user);
-          console.log('[Store] Default user created');
         }
-        
-        // Ensure hasCompletedSetup is a boolean - convert explicitly using strict comparison
-        const originalHasCompletedSetup = user.hasCompletedSetup;
-        console.log('[Store] Original hasCompletedSetup:', originalHasCompletedSetup, 'type:', typeof originalHasCompletedSetup);
-        
-        // Convert to boolean using strict comparison
-        if (typeof user.hasCompletedSetup === 'number') {
-          user.hasCompletedSetup = user.hasCompletedSetup === 1;
-        } else if (typeof user.hasCompletedSetup === 'string') {
-          user.hasCompletedSetup = user.hasCompletedSetup === 'true' || user.hasCompletedSetup === '1';
-        } else if (typeof user.hasCompletedSetup !== 'boolean') {
-          user.hasCompletedSetup = user.hasCompletedSetup === true;
-        }
-        
-        // Final check - ensure it's definitely a boolean
-        user.hasCompletedSetup = user.hasCompletedSetup === true;
-        console.log('[Store] Final hasCompletedSetup:', user.hasCompletedSetup, 'type:', typeof user.hasCompletedSetup);
-        
-        const longGoals = await getLongGoals();
-        const shortGoals = await getShortGoals();
-        const tasks = await getTasks();
-        const todayProgress = await getTodayProgress();
-        const streak = await calculateStreak();
-        
-        console.log('[Store] Data loaded successfully');
-        console.log('[Store] Setting state with user.hasCompletedSetup:', user.hasCompletedSetup, 'type:', typeof user.hasCompletedSetup);
-        
+
+        // Normalize boolean
+        user.hasCompletedSetup =
+          user.hasCompletedSetup === true || user.hasCompletedSetup === 1;
+
+        // 3️⃣ Load all data
+        const [longGoals, shortGoals, tasks, todayProgress, streak] =
+          await Promise.all([
+            getLongGoals(),
+            getShortGoals(),
+            getTasks(),
+            calculateTodayProgress(),
+            calculateStreak(),
+          ]);
+
+        // 4️⃣ Set store
         set({
           user,
           longGoals,
@@ -89,31 +80,34 @@ export const useAppStore = create((set, get) => ({
           streak,
           isLoading: false,
         });
-        
-        console.log('[Store] State updated successfully');
+
         isInitializing = false;
         initPromise = null;
       } catch (error) {
-        console.error('[Store] Error initializing app:', error);
-        console.error('[Store] Error stack:', error.stack);
-        // Always set loading to false even on error
+        console.error('[Store] Initialization error:', error);
         isInitializing = false;
         initPromise = null;
         set({ isLoading: false });
       }
     })();
-    
+
     return initPromise;
   },
-  
+
+  // --------------------
+  // REFRESH DATA
+  // --------------------
   refreshData: async () => {
     try {
-      const longGoals = await getLongGoals();
-      const shortGoals = await getShortGoals();
-      const tasks = await getTasks();
-      const todayProgress = await getTodayProgress();
-      const streak = await calculateStreak();
-      
+      const [longGoals, shortGoals, tasks, todayProgress, streak] =
+        await Promise.all([
+          getLongGoals(),
+          getShortGoals(),
+          getTasks(),
+          calculateTodayProgress(),
+          calculateStreak(),
+        ]);
+
       set({
         longGoals,
         shortGoals,
@@ -122,45 +116,127 @@ export const useAppStore = create((set, get) => ({
         streak,
       });
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error('[Store] Refresh error:', error);
     }
   },
-  
+
+  // --------------------
+  // USER
+  // --------------------
   setUser: (user) => set({ user }),
-  
-  addLongGoal: (goal) => {
-    const longGoals = [...get().longGoals, goal];
-    set({ longGoals });
-  },
-  
-  addShortGoal: (goal) => {
-    const shortGoals = [...get().shortGoals, goal];
-    set({ shortGoals });
-  },
-  
-  addTask: (task) => {
-    const tasks = [...get().tasks, task];
-    set({ tasks });
-  },
-  
-  updateLongGoal: (updatedGoal) => {
-    const longGoals = get().longGoals.map(goal => 
-      goal.id === updatedGoal.id ? updatedGoal : goal
-    );
-    set({ longGoals });
-  },
-  
-  updateShortGoal: (updatedGoal) => {
-    const shortGoals = get().shortGoals.map(goal => 
-      goal.id === updatedGoal.id ? updatedGoal : goal
-    );
-    set({ shortGoals });
-  },
-  
-  updateTask: (updatedTask) => {
-    const tasks = get().tasks.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
-    );
-    set({ tasks });
-  },
+
+  // --------------------
+  // LONG GOALS
+  // --------------------
+  addLongGoal: (goal) =>
+    set((state) => ({
+      longGoals: [...state.longGoals, goal],
+    })),
+
+  updateLongGoal: (updatedGoal) =>
+    set((state) => ({
+      longGoals: state.longGoals.map((g) =>
+        g.id === updatedGoal.id ? { ...g, ...updatedGoal } : g
+      ),
+    })),
+
+  // --------------------
+  // SHORT GOALS
+  // --------------------
+  addShortGoal: (goal) =>
+    set((state) => ({
+      shortGoals: [...state.shortGoals, goal],
+    })),
+
+  updateShortGoal: (updatedGoal) =>
+    set((state) => ({
+      shortGoals: state.shortGoals.map((g) =>
+        g.id === updatedGoal.id
+          ? {
+              ...g,            // keep createdAt, completionPercentage
+              ...updatedGoal,  // override edited fields
+            }
+          : g
+      ),
+    })),
+
+  deleteShortGoal: (goalId) =>
+    set((state) => ({
+      shortGoals: state.shortGoals.filter((g) => g.id !== goalId),
+    })),
+
+  // --------------------
+  // TASKS
+  // --------------------
+  addTask: (task) =>
+    set((state) => ({
+      tasks: [...state.tasks, task],
+    })),
+
+  updateTask: (updatedTask) =>
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === updatedTask.id ? { ...t, ...updatedTask } : t
+      ),
+    })),
+
+    // --------------------
+  // TASK ALARMS (UI STATE ONLY)
+  // --------------------
+
+  setTaskAlarms: (taskId, alarms) =>
+    set((state) => ({
+      taskAlarms: {
+        ...state.taskAlarms,
+        [taskId]: alarms,
+      },
+    })),
+
+  addTaskAlarm: (taskId, alarm) =>
+    set((state) => ({
+      taskAlarms: {
+        ...state.taskAlarms,
+        [taskId]: [
+          ...(state.taskAlarms[taskId] || []),
+          alarm,
+        ],
+      },
+    })),
+
+  updateTaskAlarm: (taskId, updatedAlarm) =>
+  set((state) => ({
+    taskAlarms: {
+      ...state.taskAlarms,
+      [taskId]: (state.taskAlarms[taskId] || []).map((a) =>
+        a.id === updatedAlarm.id ? { ...a, ...updatedAlarm } : a
+      ),
+    },
+  })),
+
+
+  deleteTaskAlarm: (taskId, alarmId) =>
+  set((state) => ({
+    taskAlarms: {
+      ...state.taskAlarms,
+      [taskId]: (state.taskAlarms[taskId] || []).filter(
+        (a) => a.id !== alarmId
+      ),
+    },
+  })),
+
+
+     // --------------------
+  // ALARM SETTINGS (UI STATE ONLY)
+  // --------------------
+
+  setAlarmSettings: (taskId, settings) =>
+    set((state) => ({
+      alarmSettings: {
+        ...state.alarmSettings,
+        [taskId]: settings,
+      },
+    })),
 }));
+
+
+ 

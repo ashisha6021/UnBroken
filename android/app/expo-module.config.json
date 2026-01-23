@@ -1,0 +1,7 @@
+{
+  "android": {
+    "modules": [
+      "com.unbroken.app.alarm.ExactAlarmModule"
+    ]
+  }
+}

@@ -8,7 +8,7 @@ export default function SetupScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Unbroken</Text>
+        <Text style={styles.title}>Welcome to UnBroken</Text>
         <Text style={styles.subtitle}>
           Let's set up your discipline system. We'll start with your long-term goals, then break them down into short-term goals and daily tasks.
         </Text>

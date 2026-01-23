@@ -1,14 +1,34 @@
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, longGoals, shortGoals, streak } = useAppStore();
+  const { user, longGoals: storeLongGoals, shortGoals, streak } = useAppStore();
+  const [longGoals, setLongGoals] = useState(storeLongGoals);
+
+  // Sync store changes to local state
+  useEffect(() => {
+    setLongGoals(storeLongGoals);
+  }, [storeLongGoals]);
+
+  // Refresh when screen comes into focus (after navigating back from LongGoalsScreen)
+  useFocusEffect(() => {
+    setLongGoals(storeLongGoals);
+  });
+
+  const handleEditGoal = (goal) => {
+    router.push({
+      pathname: '/setup/long-goals',
+      params: { editingGoalId: goal.id },
+    });
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* PROFILE */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>PROFILE</Text>
         <View style={styles.card}>
@@ -17,6 +37,7 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      {/* STATISTICS */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>STATISTICS</Text>
         <View style={styles.card}>
@@ -27,14 +48,24 @@ export default function SettingsScreen() {
           <Text style={styles.label}>Longest Streak</Text>
           <Text style={styles.value}>{streak?.longestStreak || 0} days</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>Long-Term Goals</Text>
-          <Text style={styles.value}>{longGoals.length}</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>Short-Term Goals</Text>
-          <Text style={styles.value}>{shortGoals.length}</Text>
-        </View>
+
+            <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push('/settings/long-goals-list')}
+      >
+        <Text style={styles.label}>Long-Term Goals</Text>
+        <Text style={styles.value}>{longGoals.length}</Text>
+      </TouchableOpacity>
+
+        {/* Short-Term Goals */}
+      <TouchableOpacity
+  style={styles.card}
+  onPress={() => router.push('/settings/short-goals-list')}
+>
+  <Text style={styles.label}>Short-Term Goals</Text>
+  <Text style={styles.value}>{shortGoals.length}</Text>
+</TouchableOpacity>
+
         <TouchableOpacity
           style={styles.button}
           onPress={() => router.push('/streak')}
@@ -43,6 +74,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* REWARDS & PUNISHMENTS */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>REWARDS & PUNISHMENTS</Text>
         <TouchableOpacity
@@ -56,17 +88,11 @@ export default function SettingsScreen() {
   );
 }
 
+// --- STYLES ---
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  section: {
-    marginBottom: SPACING.xl,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { padding: SPACING.lg },
+  section: { marginBottom: SPACING.xl },
   sectionTitle: {
     ...TYPOGRAPHY.h3,
     color: COLORS.textPrimary,
@@ -83,25 +109,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderColor: COLORS.textPrimary
   },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  },
-  value: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
+  label: { ...TYPOGRAPHY.body, color: COLORS.textSecondary },
+  value: { ...TYPOGRAPHY.body, color: COLORS.textPrimary, fontWeight: '600' },
   button: {
     backgroundColor: COLORS.accent,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
+    marginTop: SPACING.sm,
   },
-  buttonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-    textTransform: 'uppercase',
+  buttonText: { ...TYPOGRAPHY.button, color: COLORS.background, textTransform: 'uppercase' },
+  goalCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: SPACING.sm,
   },
+  goalCardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: SPACING.sm },
+  goalTitle: { ...TYPOGRAPHY.body, color: COLORS.textPrimary, flex: 1 },
+  completionBadge: { backgroundColor: COLORS.accent, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: BORDER_RADIUS.sm },
+  completionText: { ...TYPOGRAPHY.bodySmall, color: COLORS.background, fontWeight: '600' },
+  editButton: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs },
+  editButtonText: { ...TYPOGRAPHY.bodySmall, color: COLORS.accent, fontWeight: '600' },
 });

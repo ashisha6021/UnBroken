@@ -4,8 +4,21 @@ let db = null;
 
 // Initialize database
 export const initDatabase = async () => {
+  console.log('[Database] initDatabase called');
   try {
+    console.log('[Database] About to delete database...');
+    // try {
+    //   await SQLite.deleteDatabaseAsync('unbroken.db');
+    //   console.log("[Database] DB deleted successfully")
+    // } catch (deleteError) {
+    //   console.warn('[Database] Delete failed (might be normal):', deleteError.message);
+    // }
+    // Temporarily comment out delete to test
+    console.log("Hello World")
+    console.log('[Database] Skipping delete for now');
     db = await SQLite.openDatabaseAsync('unbroken.db');
+    console.log('[Database] Database opened successfully');
+    console.log('[Database] Database opened successfully');
     
     // Create tables - execute each statement individually
     await db.runAsync(`
@@ -34,6 +47,7 @@ export const initDatabase = async () => {
     } catch (e) {
       // Column already exists, ignore
     }
+  
 
     await db.runAsync(`
       CREATE TABLE IF NOT EXISTS short_goals (
@@ -54,7 +68,7 @@ export const initDatabase = async () => {
     } catch (e) {
       // Column already exists, ignore
     }
-
+  
     await db.runAsync(`
       CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
@@ -110,7 +124,41 @@ export const initDatabase = async () => {
         createdAt TEXT NOT NULL
       )
     `);
+    
+        await db.runAsync(`
+      CREATE TABLE IF NOT EXISTS task_alarms (
+        id TEXT PRIMARY KEY,
+        taskId TEXT NOT NULL,
+        dayOfWeek INTEGER NOT NULL,
+        time TEXT NOT NULL,
+        enabled INTEGER DEFAULT 1,
+        isCritical INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL
+      )
+    `);
 
+    await db.runAsync(`
+      CREATE TABLE IF NOT EXISTS alarm_settings (
+        taskId TEXT PRIMARY KEY,
+        ringDuration INTEGER DEFAULT 120,
+        snoozeDuration INTEGER DEFAULT 120,
+        requireBrainGame INTEGER DEFAULT 1,
+        motivationType TEXT NULL,
+        motivationSource TEXT NULL,
+        createdAt TEXT NOT NULL
+      )
+    `);
+
+    await db.runAsync(`
+      CREATE TABLE IF NOT EXISTS brain_game_logs (
+        id TEXT PRIMARY KEY,
+        taskId TEXT NOT NULL,
+        gameType TEXT NOT NULL,
+        solved INTEGER DEFAULT 0,
+        duration INTEGER,
+        createdAt TEXT NOT NULL
+      )
+    `); 
     // Create indexes
     await db.runAsync(`
       CREATE INDEX IF NOT EXISTS idx_task_logs_date ON task_logs(date)

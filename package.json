@@ -10,15 +10,22 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-picker/picker": "^2.11.1",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "date-fns": "^3.6.0",
+    "exact-alarm": "file:./exact-alarm",
     "expo": "~54.0.31",
+    "expo-alarm-module": "^1.2.0",
+    "expo-keep-awake": "~15.0.8",
     "expo-linking": "~8.0.11",
+    "expo-notifications": "~0.32.16",
     "expo-router": "~6.0.21",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-confetti-cannon": "^1.5.2",
     "react-native-safe-area-context": "~5.6.0",
@@ -29,7 +36,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "babel-preset-expo": "~54.0.9",
-    "react-refresh": "^0.18.0"
+    "react-refresh": "^0.14.2"
   },
   "private": true
 }

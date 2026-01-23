@@ -1,4 +1,13 @@
 import { getDatabase } from './database';
+import Constants from 'expo-constants';
+
+const appName =
+  Constants.expoConfig?.name ??
+  Constants.manifest?.name ??
+  'unknown-app';
+
+console.log('[App]', appName);
+
 
 // User operations
 export const saveUser = async (user) => {
@@ -212,10 +221,19 @@ export const getTaskLogs = async () => {
 
 export const addTaskLog = async (log) => {
   const db = getDatabase();
+
   await db.runAsync(
-    `INSERT OR REPLACE INTO task_logs (id, taskId, date, completed, note, createdAt) 
+    `INSERT OR REPLACE INTO task_logs 
+     (id, taskId, date, completed, note, createdAt)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [log.id, log.taskId, log.date, log.completed ? 1 : 0, log.note || null, log.createdAt]
+    [
+      log.id,
+      log.taskId,
+      log.date,
+      log.completed ? 1 : 0,
+      log.note || null,
+      log.createdAt,
+    ]
   );
 };
 
@@ -349,3 +367,135 @@ export const isBreakDay = async (date) => {
   const result = await db.getFirstAsync('SELECT 1 FROM break_days WHERE date = ?', [date]);
   return !!result;
 };
+
+
+// --------------------
+// TASK ALARMS
+// --------------------
+
+export const dbAddTaskAlarm = async (alarm) => {
+  const db = getDatabase();
+  await db.runAsync(
+    `INSERT INTO task_alarms
+     (id, taskId, dayOfWeek, time, enabled, isCritical, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      alarm.id,
+      alarm.taskId,
+      alarm.dayOfWeek,
+      alarm.time,
+      alarm.enabled ? 1 : 0,
+      alarm.isCritical ? 1 : 0,
+      alarm.createdAt,
+    ]
+  );
+};
+
+export const dbGetTaskAlarmsByTask = async (taskId) => {
+  const db = getDatabase();
+  const rows = await db.getAllAsync(
+    `SELECT * FROM task_alarms WHERE taskId = ?`,
+    [taskId]
+  );
+
+  return rows.map((r) => ({
+    ...r,
+    enabled: r.enabled === 1,
+    isCritical: r.isCritical === 1,
+  }));
+};
+
+
+export const dbUpdateTaskAlarm = async (alarm) => {
+  const db = getDatabase();
+  await db.runAsync(
+    `UPDATE task_alarms
+     SET dayOfWeek = ?, time = ?, enabled = ? 
+     WHERE id = ?`,
+    [
+      alarm.dayOfWeek,
+      alarm.time,
+      alarm.enabled ? 1 : 0,
+      alarm.id,
+    ]
+  );
+};
+
+
+export const deleteTaskAlarm = async (alarmId) => {
+  const db = getDatabase();
+  await db.runAsync(
+    `DELETE FROM task_alarms WHERE id = ?`,
+    [alarmId]
+  );
+};
+
+// --------------------
+// ALARM SETTINGS
+// --------------------
+
+export const saveAlarmSettings = async (settings) => {
+  const db = getDatabase();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO alarm_settings
+     (taskId, ringDuration, snoozeDuration, requireBrainGame, motivationType, motivationSource, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      settings.taskId,
+      settings.ringDuration ?? 120,
+      settings.snoozeDuration ?? 120,
+      settings.requireBrainGame ? 1 : 0,
+      settings.motivationType || null,
+      settings.motivationSource || null,
+      settings.createdAt,
+    ]
+  );
+};
+
+export const getAlarmSettingsByTask = async (taskId) => {
+  const db = getDatabase();
+  const result = await db.getFirstAsync(
+    `SELECT * FROM alarm_settings WHERE taskId = ?`,
+    [taskId]
+  );
+
+  if (!result) return null;
+
+  return {
+    ...result,
+    requireBrainGame: result.requireBrainGame === 1,
+  };
+};
+// --------------------
+// BRAIN GAME LOGS
+// --------------------
+
+export const addBrainGameLog = async (log) => {
+  const db = getDatabase();
+  await db.runAsync(
+    `INSERT INTO brain_game_logs
+     (id, taskId, gameType, solved, duration, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      log.id,
+      log.taskId,
+      log.gameType,
+      log.solved ? 1 : 0,
+      log.duration || null,
+      log.createdAt,
+    ]
+  );
+};
+
+export const getRecentBrainGames = async (taskId, limit = 2) => {
+  const db = getDatabase();
+  return await db.getAllAsync(
+    `SELECT gameType FROM brain_game_logs
+     WHERE taskId = ?
+     ORDER BY createdAt DESC
+     LIMIT ?`,
+    [taskId, limit]
+  );
+};
+
+

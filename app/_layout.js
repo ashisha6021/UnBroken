@@ -4,6 +4,10 @@ import { View, ActivityIndicator } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { StatusBar } from 'expo-status-bar';
 import { COLORS } from '../constants/theme';
+import { getLongGoals } from '../storage/storage-sqlite';
+import { setupAlarmChannels1} from '../alarm1/alarmScheduler123';
+import * as Notifications from 'expo-notifications';
+import { useRouter } from 'expo-router';
 
 // Define screen options as constants to ensure proper boolean types
 // Using Object.freeze to prevent any modifications
@@ -21,9 +25,38 @@ const SETTINGS_RULES_OPTIONS = Object.freeze({ title: 'Rules', headerShown: true
 const STREAK_INDEX_OPTIONS = Object.freeze({ title: 'Streak Calendar', headerShown: true });
 
 export default function RootLayout() {
+  const router = useRouter();
+
   const initializeApp = useAppStore((state) => state.initializeApp);
   const isLoading = useAppStore((state) => state.isLoading);
   const [isInitialized, setIsInitialized] = useState(false);
+  const COMPACT_HEADER = {
+  headerShown: true,
+
+  headerStyle: {
+    backgroundColor: '#000000',
+  },
+
+  headerTintColor: '#FFFFFF',
+
+  // 🔥 THIS is what shrinks the header visually
+  headerTitleStyle: {
+    fontSize: 20,       // smaller title
+    fontWeight: '500',
+  },
+
+  // 🔥 Reduce vertical padding around back arrow
+  headerLeftContainerStyle: {
+    paddingVertical: 2,
+  },
+
+  headerTitleAlign: 'left',
+
+  contentStyle: {
+    backgroundColor: '#000000',
+  },
+};
+
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // Use functions for options to ensure type stability - React Navigation supports both
@@ -31,53 +64,60 @@ export default function RootLayout() {
   const getIndexOptions = useMemo(() => () => ({ 
     headerShown: false 
   }), []);
+    const getRingingOptions = useMemo(() => () => ({ 
+    headerShown: false 
+  }), []);
+  const getSettingsIndexOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
+    title: 'Settings', 
+    
+  }), []);
+  const getSettingsRulesOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
+    title: 'Rules', 
+    
+  }), []); 
+    const getLongList = useMemo(() => () => ({ 
+      ...COMPACT_HEADER,    
+      title: 'Long-Term Goals List', 
+    
+    
+  }), []);
+     const getShortList = useMemo(() => () => ({ 
+      ...COMPACT_HEADER,
+    title: 'Short-Term Goals List', 
+    
+  }), []);
   const getSetupIndexOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Setup', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+    
+    
   }), []);
   const getSetupNameOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Your Name', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+  
   }), []);
   const getSetupLongGoalsOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Long-Term Goals', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+   
   }), []);
   const getSetupShortGoalsOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Short-Term Goals', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+    
   }), []);
   const getSetupTasksOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Tasks', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+    
   }), []);
   const getLogIndexOptions = useMemo(() => () => ({ 
+    ...COMPACT_HEADER,
     title: 'Log Progress', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+    
   }), []);
   const getResultIndexOptions = useMemo(() => () => ({ 
     headerShown: false 
@@ -85,37 +125,35 @@ export default function RootLayout() {
   const getCelebrationIndexOptions = useMemo(() => () => ({ 
     headerShown: false 
   }), []);
-  const getSettingsIndexOptions = useMemo(() => () => ({ 
-    title: 'Settings', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
-  }), []);
-  const getSettingsRulesOptions = useMemo(() => () => ({ 
-    title: 'Rules', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
-  }), []);
-  const getStreakIndexOptions = useMemo(() => () => ({ 
+  
+  const getStreakIndexOptions = useMemo(() => () => ({
+    ...COMPACT_HEADER, 
     title: 'Streak Calendar', 
-    headerShown: true,
-    headerStyle: { backgroundColor: '#000000' },
-    headerTintColor: '#FFFFFF',
-    headerTitleStyle: { fontWeight: '600' },
-    contentStyle: { backgroundColor: '#000000' },
+   
   }), []);
+  
+  const getAlarmoptions = useMemo(() => () => ({
+    ...COMPACT_HEADER,
+          title: 'Alarms', 
+         
+        }), []);
 
+
+    const getAlarmsettingoptions = useMemo(() => () => ({
+      ...COMPACT_HEADER,
+          title: 'Alarm Setting', 
+        
+        }), []);
+        
   useEffect(() => {
     console.log('[RootLayout] Component mounted, initializing app...');
     const init = async () => {
       try {
         await initializeApp();
-        console.log('[RootLayout] Initialization complete');
+         // 🔔 SETUP ANDROID ALARM CHANNELS (ONCE)
+        await setupAlarmChannels1();
+
+        console.log('[RootLayout] Initialization and Alarm Channels Setup Complete');
         setIsInitialized(true);
       } catch (error) {
         console.error('[RootLayout] Initialization error:', error);
@@ -124,6 +162,37 @@ export default function RootLayout() {
     };
     init();
   }, []);
+  
+
+
+  useEffect(() => {
+  const subscription =
+    Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data =
+          response.notification.request.content.data;
+
+        if (!data?.alarmId) return;
+
+        console.log('[Notification Tap]', data);
+
+        router.push({
+          pathname: '/alarms-setter/ringing123',
+          params: {
+            alarmId: data.alarmId,
+            taskId: data.taskId,
+            dayOfWeek: data.dayOfWeek,
+            time: data.time,
+            isCritical: String(data.isCritical),
+            requireBrainGame: String(data.requireBrainGame),
+            snoozeDuration: String(data.snoozeDuration),
+          },
+        });
+      }
+    );
+
+  return () => subscription.remove();
+}, []);
 
   console.log('[RootLayout] Rendering layout... isLoading:', isLoading, 'isInitialized:', isInitialized);
 
@@ -198,17 +267,38 @@ export default function RootLayout() {
           options={getCelebrationIndexOptions} 
         />
         <Stack.Screen 
-          name="settings/index" 
-          options={getSettingsIndexOptions} 
-        />
-        <Stack.Screen 
-          name="settings/rules" 
-          options={getSettingsRulesOptions} 
-        />
-        <Stack.Screen 
           name="streak/index" 
           options={getStreakIndexOptions} 
         />
+          <Stack.Screen 
+        name="settings/index" 
+        options={getSettingsIndexOptions} 
+      />
+    
+      <Stack.Screen 
+        name="settings/long-goals-list" 
+        options={getLongList} 
+      />
+      <Stack.Screen 
+        name="settings/short-goals-list" 
+        options={getShortList} 
+      />
+      <Stack.Screen 
+        name="settings/rules" 
+        options={getSettingsRulesOptions} 
+      />
+      <Stack.Screen 
+        name="alarms-setter/index" 
+        options={getAlarmoptions} 
+      />
+      <Stack.Screen 
+        name="alarms-setter/alarmsetting1" 
+        options={getAlarmsettingoptions} 
+      />
+      <Stack.Screen 
+        name="alarms-setter/ringing123" 
+        options={getRingingOptions} 
+      />
         </Stack>
       </>
     );

@@ -31,7 +31,15 @@
     "scheme": "unbroken",
     "plugins": [
       "expo-router",
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      "@react-native-community/datetimepicker",
+      "expo-alarm-module"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f3a6b84e-6acd-4383-87c9-18faf274b2c2"
+      }
+    }
   }
 }

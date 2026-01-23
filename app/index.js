@@ -6,12 +6,19 @@ import { useAppStore } from '../store/useAppStore';
 import { getRandomQuote } from '../utils/quotes';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../constants/theme';
 
+
+
+
 export default function HomeScreen() {
   console.log('[HomeScreen] Component rendering...');
+
   
   const router = useRouter();
   const { user, isLoading, initializeApp, streak } = useAppStore();
   const [quote, setQuote] = useState('');
+ 
+ 
+
 
   useEffect(() => {
     console.log('[HomeScreen] useEffect running...');
@@ -65,6 +72,20 @@ export default function HomeScreen() {
           <View style={styles.quoteContainer}>
             <Text style={styles.quote}>{quote}</Text>
           </View>
+          
+          {!hasCompletedSetup && (<TouchableOpacity 
+          style={styles.ctaButton}
+          onPress={() => router.push('/setup')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ctaText}>LET'S START OUR JOURNEY</Text>
+        </TouchableOpacity>
+
+          )
+
+          }
+
+
 
           {hasCompletedSetup && streak && (
           <View style={styles.streakContainer}>
@@ -78,22 +99,22 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        <TouchableOpacity 
+      
+       { hasCompletedSetup && (<TouchableOpacity 
           style={styles.ctaButton}
           onPress={handleLogProgress}
           activeOpacity={0.8}
         >
           <Text style={styles.ctaText}>LET'S LOG TODAY'S PROGRESS</Text>
-        </TouchableOpacity>
+        </TouchableOpacity>)}
 
           {hasCompletedSetup && (
             <TouchableOpacity 
-              style={styles.settingsButton}
+              style={styles.ctaButton}
               onPress={() => router.push('/settings')}
               activeOpacity={0.8}
             >
-              <Text style={styles.settingsButtonText}>SETTINGS</Text>
+              <Text style={styles.ctaText}>SETTINGS</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -135,15 +156,17 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     marginBottom: SPACING.xxl,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border,  
+    borderColor:COLORS.textPrimary
   },
   quote: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    color: COLORS.textPrimary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   ctaButton: {
+    marginTop: SPACING.md,
     backgroundColor: COLORS.accent,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
@@ -180,6 +203,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     alignItems: 'center',
     width: '100%',
+    borderColor:COLORS.textPrimary
   },
   streakLabel: {
     ...TYPOGRAPHY.bodySmall,
@@ -194,10 +218,17 @@ const styles = StyleSheet.create({
   viewCalendarButton: {
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.md,
+     borderRadius: BORDER_RADIUS.md,
+     borderWidth:1,
+     borderColor:COLORS.accent,
+     backgroundColor: COLORS.accent
+    
+
   },
   viewCalendarText: {
     ...TYPOGRAPHY.bodySmall,
-    color: COLORS.accent,
-    textDecorationLine: 'underline',
+    color: COLORS.background,
+    
+    
   },
 });

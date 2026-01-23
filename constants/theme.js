@@ -3,11 +3,13 @@
 export const COLORS = {
   // Primary colors
   background: '#000000',
+  // background:'#FFFFFF',
   surface: '#0A0A0A',
   surfaceElevated: '#1A1A1A',
   
   // Text colors
-  textPrimary: '#FFFFFF',
+  textPrimary: '#FFFFFF', 
+  // textPrimary:'#000000',
   textSecondary: '#A0A0A0',
   textMuted: '#606060',
   
