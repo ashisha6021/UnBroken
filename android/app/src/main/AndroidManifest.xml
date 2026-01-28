@@ -1,0 +1,60 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+
+
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+
+      <receiver
+    android:name=".alarm.AlarmReceiver"
+    android:exported="false" />
+
+  <service
+  android:name=".alarm.AlarmService"
+  android:exported="false"
+  android:foregroundServiceType="mediaPlayback" />
+     <activity
+    android:name=".MainActivity"
+    android:label="@string/app_name"
+    android:theme="@style/AppTheme"
+    android:launchMode="standard"
+    android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+    android:windowSoftInputMode="adjustResize"
+    android:exported="true">
+    <intent-filter>
+      <action android:name="android.intent.action.MAIN" />
+      <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+  </activity>
+
+  <activity
+    android:name=".alarm.AlarmActivity"
+    android:exported="true"
+    android:launchMode="singleTask"
+    android:taskAffinity="com.unbrokenrna.alarm.TASK"
+    android:excludeFromRecents="true"
+    android:turnScreenOn="true"
+    android:showWhenLocked="true"
+    android:screenOrientation="portrait"
+    android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+
+    </application>
+</manifest>
