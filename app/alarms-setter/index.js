@@ -25,7 +25,7 @@ import {
 } from '../../storage/storage-sqlite';
 
 import { DAY_NAMES } from '../../types';
-import { COLORS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+import { COLORS, SPACING, TYPOGRAPHY ,BORDER_RADIUS} from '../../constants/theme';
 
 import {
   scheduleAlarm,
@@ -92,8 +92,9 @@ export default function AlarmScreen() {
   }
   return true;
 };
+ 
 
-
+const isGroupButtonEnabled = selectedDays.length > 0;
 
 
 
@@ -396,7 +397,11 @@ const toggleEnabled = async (day) => {
   // --------------------
   return (
     <View style={styles.largecontainer}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+  style={styles.container}
+  contentContainerStyle={{ paddingBottom: 20}}
+>
+
         <Text style={styles.title}>Alarm for Task</Text>
 
         <View style={styles.nameContainer}>
@@ -429,11 +434,24 @@ const toggleEnabled = async (day) => {
         </View>
 
         <TouchableOpacity
-          style={styles.applyButton}
-          onPress={() => setGroupPickerOpen(true)}
-        >
-          <Text style={styles.applyText}>SET TIME FOR SELECTED DAYS</Text>
-        </TouchableOpacity>
+  activeOpacity={0.8}
+  disabled={!isGroupButtonEnabled}
+  style={[
+    styles.applyButton,
+    !isGroupButtonEnabled && styles.applyButtonDisabled,
+  ]}
+  onPress={() => setGroupPickerOpen(true)}
+>
+  <Text
+    style={[
+      styles.applyText,
+      !isGroupButtonEnabled && styles.applyTextDisabled,
+    ]}
+  >
+    SET TIME FOR SELECTED DAYS
+  </Text>
+</TouchableOpacity>
+
         
         <Text style={styles.sectionTitle}>Per day alarms</Text>
         {task.daysOfWeek.map((day) => {
@@ -540,162 +558,250 @@ const toggleEnabled = async (day) => {
 // STYLES
 // --------------------
 const styles = StyleSheet.create({
-  largecontainer:{
+  /* ===========================
+     SCREEN BASE
+  ============================ */
+
+  largecontainer: {
     flex: 1,
-    
-    backgroundColor:COLORS.background
+    backgroundColor: COLORS.background,
   },
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SPACING.md,
-    // marginBottom: SPACING.xs,
-    paddingBottom: SPACING.xl,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: SPACING.lg,
     backgroundColor: COLORS.background,
   },
-  muted: {
-    color: COLORS.textMuted,
-  },
+
+  /* ===========================
+     HEADER
+  ============================ */
+
   title: {
-    ...TYPOGRAPHY.h2,
+    fontSize: 30,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    // fon
+    marginBottom: SPACING.md,
+    letterSpacing: -0.5,
   },
-  taskName: {
-    ...TYPOGRAPHY.name,
-    color: COLORS.background,
-  
-    fontSize: SPACING.lg,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.label,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    fontSize: SPACING.md,
-  },
-  daySelector: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  dayChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+
+  /* ===========================
+     TASK NAME (Premium Badge)
+  ============================ */
+
+  nameContainer: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: BORDER_RADIUS.full,
+    marginBottom: SPACING.xl,
   },
+
+  taskName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.accent,
+  },
+
+  /* ===========================
+     SECTION LABELS
+  ============================ */
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+    // marginTop: SPACING.lg,
+  },
+
+  /* ===========================
+     DAY CHIPS
+  ============================ */
+
+  daySelector: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+
+  dayChip: {
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+
   dayChipActive: {
     backgroundColor: COLORS.accent,
     borderColor: COLORS.accent,
   },
+
   dayChipText: {
-    color: COLORS.textPrimary,
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
   },
+
   dayChipTextActive: {
     color: COLORS.background,
+    fontWeight: "800",
   },
+
+  /* ===========================
+     APPLY BUTTON (Premium CTA)
+  ============================ */
+
   applyButton: {
-    marginTop: SPACING.md,
-    padding: SPACING.md,
     backgroundColor: COLORS.accent,
-    borderRadius: 8,
-    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+    marginBottom: SPACING.xl,
   },
+
   applyText: {
+    fontSize: 13,
+    fontWeight: "800",
     color: COLORS.background,
-    fontWeight: '600',
+    letterSpacing: 0.8,
   },
+
+  /* ===========================
+     PER DAY ALARM ROW (Premium Card)
+  ============================ */
+
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: SPACING.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: SPACING.sm,
+
+    /* Premium depth */
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  dayLabel: {
-    flex: 1,
-    color: COLORS.textPrimary,
-  },
+
+ dayLabel: {
+  width: 90,            // ✅ Fixed width so it never shrinks
+  fontSize: 14,
+  fontWeight: "700",
+  color: COLORS.textPrimary,
+},
+
+
+  /* ===========================
+     TIME PILL (Accent Glow)
+  ============================ */
+
   timeBox: {
-    padding: SPACING.sm,
-    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.borderLight,
     marginRight: SPACING.sm,
   },
+
   timeText: {
-    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.accent,
   },
-  doneButton: {
-    marginVertical  : SPACING.sm,
-    marginHorizontal: SPACING.md,
-    padding: SPACING.md,
-    backgroundColor: COLORS.success,
-    borderRadius: 8,
-    alignItems: 'center',
+
+  /* ===========================
+     CRITICAL BUTTON (Premium Outline)
+  ============================ */
+
+  criticalButton: {
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    marginLeft: SPACING.sm,
+    backgroundColor: "transparent",
   },
-  doneText: {
+
+  criticalActive: {
+    backgroundColor: COLORS.warning,
+    borderColor: COLORS.warning,
+  },
+
+  criticalText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.warning,
+    letterSpacing: 0.5,
+  },
+
+  criticalTextActive: {
     color: COLORS.background,
-    fontWeight: '600',
   },
-  nameContainer: { 
+
+  /* ===========================
+     DONE BUTTON (Floating Premium)
+  ============================ */
+
+  doneButton: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    paddingVertical: 16,
+    borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  borderRadius: 8,
-  padding: SPACING.sm,
-  // marginBottom: SPACING.md,
-marginTop: SPACING.md,
- alignItems: 'center',
-},
-criticalButton: {
+    alignItems: "center",
 
-  fontSize: 12,
-  fontWeight: '600',
-   marginRight: SPACING.md,
-  borderColor: COLORS.textPrimary,
-borderRadius: 6,
-    borderWidth: 1,
-    padding: SPACING.sm,
+    shadowColor: "#000",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
   },
 
-criticalActive:{
-  backgroundColor: COLORS.accent,
-  fontSize: 12,
-  fontWeight: '600',
-   marginRight: SPACING.md,
-  borderColor: COLORS.accent,
-borderRadius: 6,
-    borderWidth: 1,
-    padding: SPACING.sm,
+  doneText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 1,
+  },
+
+  /* ===========================
+     EMPTY / CENTER STATES
+  ============================ */
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  muted: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+  },
+  applyButtonDisabled: {
+  backgroundColor: COLORS.surfaceElevated, // premium dark surface
+  borderWidth: 1,
+  borderColor: COLORS.borderLight,
 },
 
-criticalText:{
-  color: COLORS.textPrimary,
-      fontWeight: '600',
+applyTextDisabled: {
+  color: COLORS.textMuted,
+  fontWeight: "700",
 },
-criticalTextActive:{
-  color: COLORS.background,
-  fontWeight: '600',
-},
-settingbutton:{
-  fontSize: 5,
-  fontWeight: '600',
-   marginRight: SPACING.xs,
-  borderColor: COLORS.accent,
-borderRadius: 6,
-    borderWidth: 1,
-    padding: SPACING.xs,
-  // borderWidth: 1,
-  // borderRadius: 8,
-  //   padding: SPACING.sm,
-  // borderColor: COLORS.accent,
-}
-  
+
 });
+

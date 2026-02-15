@@ -45,44 +45,59 @@ export default function SettingsScreen({ navigation }) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>STATISTICS</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Current Streak</Text>
-          <Text style={styles.value}>
-            {streak?.currentStreak || 0} days
-          </Text>
-        </View>
+        {/* STREAK BOXES SIDE BY SIDE */}
+<View style={styles.streakRow}>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Longest Streak</Text>
-          <Text style={styles.value}>
-            {streak?.longestStreak || 0} days
-          </Text>
-        </View>
+  {/* Current Streak */}
+  <View style={styles.streakCard}>
+    <Text style={styles.streaklabel}>Current Streak</Text>
+    <Text style={styles.streakValue}>
+      {streak?.currentStreak || 0} 
+    </Text>
+    <Text style={styles.label}>days</Text>
+
+  </View>
+
+  {/* Longest Streak */}
+  <View style={styles.streakCard}>
+    <Text style={styles.streaklabel}>Longest Streak</Text>
+    <Text style={styles.streakValue}>
+      {streak?.longestStreak || 0} 
+    </Text>
+    <Text style={styles.label}>days</Text>
+
+  </View>
+
+</View>
 
         {/* Long-Term Goals */}
         <TouchableOpacity
-          style={styles.card}
+          style={styles.statCard}
           onPress={() => navigation.navigate('Long-Goals List')}
         >
-          <Text style={styles.label}>Long-Term Goals</Text>
-          <Text style={styles.value}>{longGoals.length}</Text>
+         <Text style={styles.statLabel}>Long-Term Goals</Text>
+        <Text style={styles.statValue}>{longGoals.length}</Text>
+
         </TouchableOpacity>
 
         {/* Short-Term Goals */}
         <TouchableOpacity
-          style={styles.card}
+          style={styles.statCard}
           onPress={() => navigation.navigate('Short-Goals List')}
-        >
-          <Text style={styles.label}>Short-Term Goals</Text>
-          <Text style={styles.value}>{shortGoals.length}</Text>
+        > 
+          <Text style={styles.statLabel}>Short-Term Goals</Text>
+          <Text style={styles.statValue}>{shortGoals.length}</Text>
+
+  
         </TouchableOpacity>
          <TouchableOpacity
-          style={styles.card}
+          style={styles.statCard}
           onPress={() => navigation.navigate('Task List')}
         >
-          <Text style={styles.label}>TASKS</Text>
-          <Text style={styles.value}>{tasks.length}</Text>
-          {console.log("They are task",tasks)}
+          <Text style={styles.statLabel}>TASKS</Text>
+<Text style={styles.statValue}>{tasks.length}</Text>
+
+
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
@@ -95,7 +110,7 @@ export default function SettingsScreen({ navigation }) {
       </View>
 
       {/* REWARDS & PUNISHMENTS */}
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <Text style={styles.sectionTitle}>
           REWARDS & PUNISHMENTS
         </Text>
@@ -106,7 +121,7 @@ export default function SettingsScreen({ navigation }) {
         >
           <Text style={styles.buttonText}>MANAGE RULES</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </ScrollView>
   );
 }
@@ -114,52 +129,183 @@ export default function SettingsScreen({ navigation }) {
 
 // --- STYLES ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.lg },
-  section: { marginBottom: SPACING.md },
+  /* ============================
+     SCREEN BASE
+  ============================ */
+
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  content: {
+    padding: SPACING.xl,
+    paddingBottom: SPACING.xxl,
+  },
+
+  section: {
+    marginBottom: SPACING.xl,
+  },
+
+  /* ============================
+     SECTION HEADERS
+  ============================ */
+
   sectionTitle: {
-    ...TYPOGRAPHY.h3,
+    fontSize: 20,
+    fontWeight: "900",
     color: COLORS.textPrimary,
+    letterSpacing: 2,
     marginBottom: SPACING.md,
-    letterSpacing: 1,
+    textTransform: "uppercase",
   },
+
+  /* ============================
+     PROFILE CARD
+  ============================ */
+
   card: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.surfaceElevated,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+
+    borderRadius: BORDER_RADIUS.xl,
+
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
+    marginBottom: SPACING.md,
+
     borderWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderColor: COLORS.textMuted
+    borderColor: "rgba(255,255,255,0.08)",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  label: { ...TYPOGRAPHY.body, color: COLORS.textSecondary },
-  value: { ...TYPOGRAPHY.body, color: COLORS.textPrimary, fontWeight: '600' },
+
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+    letterSpacing: 0.5,
+  },
+
+  value: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+  },
+
+  /* ============================
+     STREAK MODULE ROW
+  ============================ */
+
+  streakRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+
+  streakCard: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+
+  streaklabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: SPACING.xs,
+  },
+
+  streakValue: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: COLORS.accent,
+  },
+
+  /* ============================
+     PREMIUM LIST ITEMS (Goals/Tasks)
+  ============================ */
+
+  statCard: {
+    backgroundColor: COLORS.surfaceElevated,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+
+    marginBottom: SPACING.md,
+
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  statLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+    letterSpacing: 0.5,
+  },
+
+  statValue: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: COLORS.accent,
+  },
+
+  /* ============================
+     PREMIUM BUTTON (Calendar)
+  ============================ */
+
   button: {
+    marginTop: SPACING.lg,
     backgroundColor: COLORS.accent,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.sm,
+
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
   },
-  buttonText: { ...TYPOGRAPHY.button, color: COLORS.background, textTransform: 'uppercase' },
-  goalCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.sm,
+
+  buttonText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
-  goalCardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: SPACING.sm },
-  goalTitle: { ...TYPOGRAPHY.body, color: COLORS.textPrimary, flex: 1 },
-  completionBadge: { backgroundColor: COLORS.accent, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: BORDER_RADIUS.sm },
-  completionText: { ...TYPOGRAPHY.bodySmall, color: COLORS.background, fontWeight: '600' },
-  editButton: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs },
-  editButtonText: { ...TYPOGRAPHY.bodySmall, color: COLORS.accent, fontWeight: '600' },
 });

@@ -1,30 +1,46 @@
-// alarmCompletion.js
 import {
   stopRinging,
   cancelAlarm,
   scheduleAlarm,
 } from '../../alarm1/alarmScheduler123';
+
 import { getRealm } from '../../storage/database';
 
 export async function completeAlarm({ alarmId }) {
   const realm = getRealm();
+
   const alarm = realm.objectForPrimaryKey('task_alarms', alarmId);
 
-  if (!alarm) return;
+  if (!alarm) {
+    console.warn('[completeAlarm] Alarm not found:', alarmId);
 
-  // ✅ extract primitives immediately (Realm safety)
+    // Still stop sound (never leave ringing forever)
+    await stopRinging();
+    await cancelAlarm(alarmId);
+    return;
+  }
+
+  // ✅ Extract primitives immediately
   const taskId = alarm.taskId;
   const dayOfWeek = alarm.dayOfWeek;
   const time = alarm.time;
   const isCritical = alarm.isCritical;
 
-  // 1️⃣ Stop sound first
+  console.log('[completeAlarm] Completing alarm:', {
+    alarmId,
+    taskId,
+    dayOfWeek,
+    time,
+    isCritical,
+  });
+
+  // ✅ Stop sound
   await stopRinging();
 
-  // 2️⃣ Cancel current firing ONLY
+  // ✅ Cancel current firing
   await cancelAlarm(alarmId);
 
-  // 3️⃣ Schedule next occurrence (weekly / next valid day)
+  // ✅ Schedule next occurrence
   await scheduleAlarm({
     alarmId,
     taskId,

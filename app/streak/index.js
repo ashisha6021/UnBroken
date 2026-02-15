@@ -172,168 +172,284 @@ export default function StreakCalendarScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  /* ===========================
+     SCREEN BASE
+  ============================ */
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
   content: {
-    padding: SPACING.lg,
+    padding: SPACING.xl,
+    paddingBottom: SPACING.xxl,
   },
+
+  /* ===========================
+     MONTH HEADER
+  ============================ */
+
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.xl,
   },
+
   monthTitle: {
-    ...TYPOGRAPHY.h2,
+    fontSize: 26,
+    fontWeight: "800",
     color: COLORS.textPrimary,
+    letterSpacing: -0.5,
   },
+
   monthButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.full,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.surfaceElevated,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
   },
+
   monthButtonText: {
-    ...TYPOGRAPHY.h2,
+    fontSize: 26,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    fontSize: 28,
+    marginTop: -2,
   },
+
+  /* ===========================
+     STREAK STATS CARDS
+  ============================ */
+
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.md,
     marginBottom: SPACING.xl,
   },
+
   statCard: {
     flex: 1,
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
+
   statValue: {
-    ...TYPOGRAPHY.h1,
+    fontSize: 36,
+    fontWeight: "900",
     color: COLORS.accent,
-    fontSize: 32,
-    marginBottom: SPACING.xs,
+    marginBottom: 6,
   },
+
   statLabel: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
+
+  /* ===========================
+     CALENDAR CARD CONTAINER
+  ============================ */
+
   calendarContainer: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.xl,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 7,
   },
+
+  /* ===========================
+     DAY NAME HEADER
+  ============================ */
+
   dayNamesRow: {
-    flexDirection: 'row',
-    marginBottom: SPACING.sm,
+    flexDirection: "row",
+    marginBottom: SPACING.md,
   },
+
   dayNameCell: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: SPACING.xs,
+    alignItems: "center",
   },
+
   dayNameText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+    letterSpacing: 0.5,
   },
+
+  /* ===========================
+     CALENDAR GRID
+  ============================ */
+
   calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
+
+  /* ===========================
+     DAY CELL BASE
+  ============================ */
+
   dayCell: {
-    width: '14.28%',
+    width: "14.28%",
     aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 6,
   },
+
+  dayText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+
+  /* ===========================
+     COMPLETED DAY (Premium Pill)
+  ============================ */
+
   dayCellCompleted: {
     backgroundColor: COLORS.accent,
-    borderRadius: BORDER_RADIUS.sm,
-    
+    borderRadius: BORDER_RADIUS.full,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 6,
   },
+
+  dayTextCompleted: {
+    color: COLORS.background,
+    fontWeight: "800",
+  },
+
+  /* ===========================
+     BREAK DAY (Soft Amber Outline)
+  ============================ */
+
   dayCellBreak: {
-    backgroundColor: COLORS.warning + '40',
-    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1.5,
+    borderColor: COLORS.warning,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: "rgba(255,180,0,0.08)",
   },
+
+  dayTextBreak: {
+    color: COLORS.warning,
+    fontWeight: "700",
+  },
+
+  /* ===========================
+     TODAY (Glow Ring)
+  ============================ */
+
   dayCellToday: {
     borderWidth: 2,
     borderColor: COLORS.accent,
-    borderRadius: BORDER_RADIUS.sm,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: "rgba(0,255,150,0.05)",
   },
-  dayText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  dayTextCompleted: {
-    color: COLORS.background,
-    fontWeight: '600',
-  },
-  dayTextBreak: {
-    color: COLORS.warning,
-  },
+
   dayTextToday: {
     color: COLORS.accent,
-    fontWeight: '700',
+    fontWeight: "900",
   },
-  dayCompleteTextToday:{
+
+  dayCompleteTextToday: {
     color: COLORS.background,
-    fontWeight: '700',
+    fontWeight: "900",
   },
-  checkmark: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    
-  },
-  checkmarkText: {
-    fontSize: 10,
-    color: COLORS.background,
-    fontWeight: 'bold',
-  },
+
+  /* ===========================
+     CHECK ICON
+  ============================ */
+
+checkmark: {
+  marginTop: 2,
+},
+
+checkmarkText: {
+  fontSize: 10,
+  fontWeight: "900",
+  color: COLORS.background,
+},
+
+
+  /* ===========================
+     LEGEND (Premium Chips)
+  ============================ */
+
   legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.lg,
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: SPACING.md,
+    flexWrap: "wrap",
+    marginTop: SPACING.md,
   },
+
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surfaceElevated,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
+
   legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: BORDER_RADIUS.sm,
+    width: 14,
+    height: 14,
+    borderRadius: BORDER_RADIUS.full,
   },
+
   legendCompleted: {
     backgroundColor: COLORS.accent,
   },
+
   legendBreak: {
-    backgroundColor: COLORS.warning + '40',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.warning,
+    backgroundColor: "rgba(255,180,0,0.15)",
   },
+
   legendToday: {
     borderWidth: 2,
     borderColor: COLORS.accent,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
+
   legendText: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.textSecondary,
   },
 });

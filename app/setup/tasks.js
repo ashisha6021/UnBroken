@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  FlatList,
+  FlatList,Modal
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { addTask, updateTask, saveUser } from '../../storage/storage-sqlite';
@@ -45,10 +45,16 @@ export default function TasksScreen({ navigation, route }) {
   const [selectedDays, setSelectedDays] = useState([]);
   const [minimumEffort, setMinimumEffort] = useState('');
   const [editingTaskId, setEditingTaskId] = useState(null);
+  const [shortGoalModalVisible, setShortGoalModalVisible] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState(null);
+
 
   const filteredShortGoals = longGoalId
     ? shortGoals.filter(g => g.longGoalId === longGoalId)
     : shortGoals;
+  const hasLongShortGoalTitles = filteredShortGoals.some(
+  goal => goal.title.length > 18
+);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -219,48 +225,123 @@ useEffect(() => {
         contentContainerStyle={styles.content}
       >
         <Text style={styles.instruction}>
-          {shortGoalId
-            ? `Manage tasks for "${selectedShortGoal?.title}"`
-            : 'Define daily tasks that move you toward your short-term goals.'}
-        </Text>
+  {shortGoalId
+    ? `Manage tasks for "${
+        selectedShortGoal?.title?.length > 25
+          ? selectedShortGoal.title.substring(0, 25) + "..."
+          : selectedShortGoal?.title
+      }"`
+    : "Define daily tasks that move you toward your short-term goals."}
+</Text>
 
-        {/* SHORT GOAL SELECTOR */}
-        <View style={styles.selectorContainer}>
-          <Text style={styles.label}>Link to Short-Term Goal</Text>
 
-          <FlatList
-            ref={listRef}
-            horizontal
-            data={filteredShortGoals}
-            keyExtractor={item => item.id}
-            showsHorizontalScrollIndicator={false}
-            getItemLayout={(_, index) => ({
-              length: ITEM_WIDTH,
-              offset: ITEM_WIDTH * index,
-              index,
-            })}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.selectorItem,
-                  selectedShortGoalId === item.id &&
-                    styles.selectorItemActive,
-                ]}
-                onPress={() => setSelectedShortGoalId(item.id)}
-              >
-                <Text
-                  style={[
-                    styles.selectorItemText,
-                    selectedShortGoalId === item.id &&
-                      styles.selectorItemTextActive,
-                  ]}
+       
+    {/* SHORT GOAL SELECTOR */}
+          <View style={styles.selectorContainer}>
+            <Text style={styles.label}>Link to Short-Term Goal</Text>
+
+            {/* ✅ MODAL MODE IF TITLES ARE LONG */}
+            {hasLongShortGoalTitles ? (
+              <>
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => setShortGoalModalVisible(true)}
                 >
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
+                  <Text style={styles.dropdownButtonText}>
+                    {selectedShortGoalId
+                      ? filteredShortGoals.find(g => g.id === selectedShortGoalId)?.title
+                      : "Select a Short-Term Goal"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* MODAL */}
+                <Modal
+                  visible={shortGoalModalVisible}
+                  transparent
+                  animationType="slide"
+                   onRequestClose={() => setShortGoalModalVisible(false)} 
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalBox}>
+                      <Text style={styles.modalTitle}>
+                        Choose Short-Term Goal
+                      </Text>
+
+                  
+                          <FlatList
+                              data={filteredShortGoals}
+                              keyExtractor={item => item.id}
+                              showsVerticalScrollIndicator={false}
+                              renderItem={({ item }) => (
+                                <TouchableOpacity
+                                  style={[
+                                    styles.modalItem,
+                                    selectedShortGoalId === item.id &&
+                                      styles.modalItemActive,
+                                  ]}
+                                  onPress={() => {
+                                    setSelectedShortGoalId(item.id);
+                                    setShortGoalModalVisible(false);
+                                  }}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.modalItemText,
+                                      selectedShortGoalId === item.id &&
+                                        styles.modalItemTextActive,
+                                    ]}
+                                    numberOfLines={2}
+                                  >
+                                    {item.title}
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            />
+
+                      <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setShortGoalModalVisible(false)}
+                      >
+                        <Text style={styles.closeButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              </>
+            ) : (
+              /* ✅ FLATLIST MODE IF TITLES ARE SHORT */
+              <FlatList
+                ref={listRef}
+                horizontal
+                data={filteredShortGoals}
+                keyExtractor={item => item.id}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorItem,
+                      selectedShortGoalId === item.id &&
+                        styles.selectorItemActive,
+                    ]}
+                    onPress={() => setSelectedShortGoalId(item.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.selectorItemText,
+                        selectedShortGoalId === item.id &&
+                          styles.selectorItemTextActive,
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {item.title}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
             )}
-          />
-        </View>
+          </View>
+
 
         {/* FORM */}
         {selectedShortGoal && (
@@ -339,60 +420,95 @@ useEffect(() => {
         )}
 
         {/* TASK LIST */}
-        {tasks.filter(t => t.shortGoalId === selectedShortGoalId).length >
-          0 && (
-          <View style={styles.tasksList}>
-            <Text style={styles.sectionTitle}>
-              Tasks for {selectedShortGoal?.title}
-            </Text>
+     {/* TASK LIST */}
+{tasks.filter(t => t.shortGoalId === selectedShortGoalId).length > 0 && (
+  <View style={styles.tasksList}>
 
-            {tasks
-              .filter(t => t.shortGoalId === selectedShortGoalId)
-              .map(task => (
-                <View key={task.id} style={styles.taskItem}>
-                  <View style={styles.taskContent}>
-                    <Text style={styles.taskName}>{task.name}</Text>
-                    <Text style={styles.taskDays}>
-                      {task.daysOfWeek
-                        .map(d => DAY_NAMES[d].slice(0, 3))
-                        .join(', ')}
-                    </Text>
-                    {task.minimumEffortRule && (
-                      <Text style={styles.taskEffort}>
-                        Min effort: {task.minimumEffortRule}
-                      </Text>
-                    )}
-                  </View>
+    <Text style={styles.sectionTitle}>
+      Tasks for{" "}
+      {selectedShortGoal?.title?.length > 25
+        ? selectedShortGoal.title.substring(0, 25) + "..."
+        : selectedShortGoal?.title}
+    </Text>
 
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 8,
-                      marginTop: SPACING.sm,
-                    }}
-                  >
-                    <TouchableOpacity
-                      style={styles.alarmButton}
-                      onPress={() =>
-                        navigation.navigate('Alarms', {
-                          taskId: task.id,
-                        })
-                      }
-                    >
-                      <Text style={styles.alarmButtonText}>⏰ ALARM</Text>
-                    </TouchableOpacity>
+    {tasks
+      .filter(t => t.shortGoalId === selectedShortGoalId)
+      .map(task => {
+        const isExpanded = expandedTaskId === task.id;
 
-                    <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={() => handleEditTask(task)}
-                    >
-                      <Text style={styles.editButtonText}>EDIT</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
+        return (
+          <View key={task.id} style={styles.taskCard}>
+
+            {/* ✅ TITLE FULL WIDTH */}
+            <TouchableOpacity
+              onPress={() =>
+                setExpandedTaskId(isExpanded ? null : task.id)
+              }
+            >
+              <Text
+                style={styles.taskTitle}
+                numberOfLines={isExpanded ? 10 : 2}
+              >
+                {task.name}
+              </Text>
+
+              {task.name.length > 30 && (
+                <Text style={styles.showMoreText}>
+                  {isExpanded ? "Show less ▲" : "Show more ▼"}
+                </Text>
+              )}
+            </TouchableOpacity>
+               
+              <View style={styles.divider} />  
+            {/* ✅ BOTTOM ROW (Days + Buttons Together) */}
+            <View style={styles.taskBottomRow}>
+
+              {/* Days */}
+              <Text style={styles.taskDays}>
+                {task.daysOfWeek
+                  .map(d => DAY_NAMES[d].slice(0, 3))
+                  .join(", ")}
+              </Text>
+
+              {/* Actions */}
+              <View style={styles.taskActions}>
+
+                {/* Alarm */}
+                <TouchableOpacity
+                  style={styles.alarmIconButton}
+                  onPress={() =>
+                    navigation.navigate("Alarms", {
+                      taskId: task.id,
+                    })
+                  }
+                >
+                  <Text style={styles.alarmIcon}>⏰</Text>
+                </TouchableOpacity>
+
+                {/* Edit */}
+                <TouchableOpacity
+                  style={styles.editPillButton}
+                  onPress={() => handleEditTask(task)}
+                >
+                  <Text style={styles.editPillText}>EDIT</Text>
+                </TouchableOpacity>
+
+              </View>
+            </View>
+
+            {/* Optional Min Effort */}
+            {isExpanded && task.minimumEffortRule && (
+              <Text style={styles.taskEffort}>
+                Min effort: {task.minimumEffortRule}
+              </Text>
+            )}
+
           </View>
-        )}
+        );
+      })}
+  </View>
+)}
+
       </ScrollView>
 
       {shortGoalId && (
@@ -441,272 +557,511 @@ useEffect(() => {
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  primaryFooterButtonDisabled: {
-  backgroundColor: COLORS.border,
-},
+  /* ===========================
+     SCREEN BASE
+  ============================ */
+    divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginVertical: SPACING.sm,
+  },
 
-primaryFooterTextDisabled: {
-  color: COLORS.textMuted,
-},
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
 
-
-   screen: {
-  flex: 1,
-  backgroundColor: COLORS.background,
-},
-
-footer: {
-  borderTopWidth: 1,
-  borderTopColor: COLORS.border,
-  padding: SPACING.md,
-  backgroundColor: COLORS.background,
-},
-
-primaryFooterButton: {
-  backgroundColor: COLORS.success,
-  paddingVertical: SPACING.md,
-  borderRadius: BORDER_RADIUS.md,
-  alignItems: 'center',
-  marginBottom: SPACING.sm,
-},
-
-primaryFooterText: {
-  ...TYPOGRAPHY.button,
-  color: COLORS.background,
-},
-
-secondaryFooterButton: {
-  backgroundColor: COLORS.surface,
-  borderWidth: 1,
-  borderColor: COLORS.border,
-  paddingVertical: SPACING.md,
-  borderRadius: BORDER_RADIUS.md,
-  alignItems: 'center',
-},
-
-secondaryFooterText: {
-  ...TYPOGRAPHY.button,
-  color: COLORS.textPrimary,
-},
-
-  fullWidthButton: {
-  flex: 1,
-},
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
   content: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.md, // space for footer
+    padding: SPACING.xl,
+    paddingBottom: 140,
   },
+
+  /* ===========================
+     HEADER / INSTRUCTION
+  ============================ */
+
   instruction: {
-    ...TYPOGRAPHY.body,
+    fontSize: 18,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
+    lineHeight: 26,
   },
+
+  /* ===========================
+     SHORT GOAL SELECTOR
+  ============================ */
+
   selectorContainer: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
+
   label: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
   },
+
   selectorItem: {
-    width: 120, 
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.surface,
+    width: 125,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surfaceElevated,
+
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "rgba(255,255,255,0.06)",
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+
     marginRight: SPACING.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
+
   selectorItemActive: {
     backgroundColor: COLORS.accent,
     borderColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 6,
   },
+
   selectorItemText: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 12,
+    fontWeight: "700",
     color: COLORS.textSecondary,
   },
+
   selectorItemTextActive: {
     color: COLORS.background,
-    fontWeight: '600',
+    fontWeight: "900",
   },
-  form: {
-    marginBottom: SPACING.xl,
-  },
-  input: {
-    backgroundColor: COLORS.surface,
+
+  /* ===========================
+     DROPDOWN BUTTON
+  ============================ */
+
+  dropdownButton: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+
+  dropdownButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+
+  /* ===========================
+     MODAL PICKER
+  ============================ */
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "center",
+    padding: SPACING.lg,
+  },
+
+  modalBox: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    maxHeight: "75%",
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
   },
-  daysContainer: {
-    marginBottom: SPACING.md,
+
+  modalItem: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.06)",
   },
-  daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  dayButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+
+  modalItemActive: {
+    backgroundColor: COLORS.accent + "20",
     borderRadius: BORDER_RADIUS.md,
+  },
+
+  modalItemText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+
+  modalItemTextActive: {
+    color: COLORS.accent,
+    fontWeight: "800",
+  },
+
+  closeButton: {
+    marginTop: SPACING.lg,
+    paddingVertical: 14,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    minWidth: 50,
-    alignItems: 'center',
   },
+
+  closeButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+
+  /* ===========================
+     FORM
+  ============================ */
+
+  form: {
+    marginBottom: SPACING.xxl,
+  },
+
+  formTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.lg,
+  },
+
+  input: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+
+    marginBottom: SPACING.md,
+  },
+
+  daysGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+
+  dayButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: BORDER_RADIUS.full,
+
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+
+    minWidth: 60,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
   dayButtonActive: {
     backgroundColor: COLORS.accent,
     borderColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 6,
   },
+
   dayButtonText: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 12,
+    fontWeight: "700",
     color: COLORS.textSecondary,
   },
+
   dayButtonTextActive: {
     color: COLORS.background,
-    fontWeight: '600',
+    fontWeight: "900",
   },
+
+  /* ===========================
+     PRIMARY BUTTONS
+  ============================ */
+
+  buttonRow: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+
   addButton: {
-     backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center'
+    flex: 1,
+    backgroundColor: COLORS.accent,
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    elevation: 8,
   },
+
   addButtonText: {
-    ...TYPOGRAPHY.button,
+    fontSize: 14,
+    fontWeight: "900",
     color: COLORS.background,
-    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  tasksList: {
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  taskItem: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.sm,
+
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
   },
-  taskName: {
-    ...TYPOGRAPHY.body,
+
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
     color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
   },
-  taskDays: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
+
+  /* ===========================
+     TASK LIST
+  ============================ */
+
+  tasksList: {
+    marginBottom: SPACING.xxl,
   },
-  taskLink: {
-    ...TYPOGRAPHY.caption,
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
+  },
+
+  taskCard: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 7,
+  },
+
+  taskTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    lineHeight: 22,
+  },
+
+  showMoreText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 4,
+  },
+
+taskBottomRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: SPACING.xs,
+
+  flexWrap: "nowrap",   // ✅ no breaking outside
+},
+
+
+
+ taskDays: {
+  fontSize: 12,
+  fontWeight: "600",
+  color: COLORS.textSecondary,
+
+  flex: 1,          // ✅ takes available space
+  marginRight: 10,  // ✅ space before buttons
+},
+
+
+taskActions: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+
+  flexShrink: 0,   // ✅ buttons never shrink weirdly
+},
+
+
+  alarmIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: BORDER_RADIUS.full,
+    marginLeft:SPACING.xs,
+
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+
+  alarmIcon: {
+    fontSize: 15,
     color: COLORS.accent,
   },
-  formTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
+
+  editPillButton: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+
+  editPillText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: COLORS.background,
   },
-  updateButton: {
-    backgroundColor: COLORS.success || COLORS.accent,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    flex: 1,
-  },
-  cancelButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.textPrimary,
-  },
-  taskContent: {
-    flex: 1,
-  },
+
   taskEffort: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.textMuted,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
   },
- editButton: {
-  height: 32,
-  paddingHorizontal: 14,
-  borderRadius: 6,
-  backgroundColor: COLORS.accent,
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-editButtonText: {
-  fontSize: 12,
-  fontWeight: '600',
-  color: COLORS.background,
-  lineHeight: 14,
-},
-  backButton: {
-    backgroundColor: COLORS.surface,
+
+  /* ===========================
+     FOOTER CTA
+  ============================ */
+
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
+    padding: SPACING.lg,
+    backgroundColor: COLORS.background,
+  },
+
+  footerHint: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginBottom: SPACING.sm,
+  },
+
+  primaryFooterButton: {
+    backgroundColor: COLORS.accent,
+    paddingVertical: 20,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+    elevation: 10,
+
+    marginBottom: SPACING.sm,
+  },
+
+  primaryFooterText: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 1,
+  },
+
+  primaryFooterButtonDisabled: {
+    backgroundColor: COLORS.border,
+  },
+
+  primaryFooterTextDisabled: {
+    color: COLORS.textMuted,
+  },
+
+  secondaryFooterButton: {
+    backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.lg,
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
   },
-  backButtonText: {
-    ...TYPOGRAPHY.button,
+
+  secondaryFooterText: {
+    fontSize: 14,
+    fontWeight: "700",
     color: COLORS.textPrimary,
   },
- alarmButton: {
-  height: 32,
-  paddingHorizontal: 10,
-  borderRadius: 6,
-  borderWidth: 1,
-  borderColor: COLORS.textPrimary,
-  backgroundColor: COLORS.surface,
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-
-alarmButtonText: {
-  color: COLORS.textPrimary,
-  fontSize: 12,
-  fontWeight: '600',
-  lineHeight: 14,
-},
-
-footerHint: {
-  ...TYPOGRAPHY.caption,
-  color: COLORS.textMuted,
-  textAlign: 'center',
-  marginBottom: SPACING.sm,
-},
-
-
 });
+

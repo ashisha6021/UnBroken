@@ -100,115 +100,194 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Settings')}
             activeOpacity={0.8}
           >
-            <Text style={styles.ctaText}>SETTINGS</Text>
+            <Text style={styles.settingsButtonText}>SETTINGS</Text>
           </TouchableOpacity>
         )}
       </View>
     </SafeAreaView>
-    </ScreenWrapper>
- 
+    </ScreenWrapper> 
   );
 }
 
 
 const styles = StyleSheet.create({
+  /* ============================
+     SCREEN BASE
+  ============================ */
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  content: {
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-  },
-  greeting: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xl,
-    textAlign: 'center',
-  },
-  quoteContainer: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.xxl,
-    borderWidth: 1,
-    borderColor: COLORS.border,  
-    borderColor:COLORS.textPrimary
-  },
-  quote: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  ctaButton: {
-    marginTop: SPACING.md,
-    backgroundColor: COLORS.accent,
-    paddingVertical: SPACING.md,
+    justifyContent: "center",
     paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER_RADIUS.md,
-    width: '100%',
-    alignItems: 'center',
-    shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
-  ctaText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-    textTransform: 'uppercase',
+
+  content: {
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    alignItems: "center",
   },
-  settingsButton: {
-    marginTop: SPACING.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  },
-  settingsButtonText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-  },
-  streakContainer: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+
+  /* ============================
+     GREETING
+  ============================ */
+
+  greeting: {
+    fontSize: 38,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: 1,
     marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    width: '100%',
-    borderColor:COLORS.textPrimary
+    textAlign: "center",
   },
+
+  /* ============================
+     QUOTE CARD (Premium Glass)
+  ============================ */
+
+  quoteContainer: {
+    width: "100%",
+    backgroundColor: COLORS.surfaceElevated,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+
+    marginBottom: SPACING.xl,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+
+  quote: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: COLORS.textPrimary,
+    textAlign: "center",
+    fontStyle: "italic",
+    lineHeight: 24,
+    opacity: 0.9,
+  },
+
+  /* ============================
+     STREAK CARD (Premium Highlight)
+  ============================ */
+
+  streakContainer: {
+    width: "100%",
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+
+    alignItems: "center",
+    marginBottom: SPACING.xl,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
   streakLabel: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
     marginBottom: SPACING.xs,
   },
+
   streakValue: {
-    ...TYPOGRAPHY.h2,
+    fontSize: 36,
+    fontWeight: "900",
     color: COLORS.accent,
     marginBottom: SPACING.sm,
   },
-  viewCalendarButton: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-     borderRadius: BORDER_RADIUS.md,
-     borderWidth:1,
-     borderColor:COLORS.accent,
-     backgroundColor: COLORS.accent
-    
 
+  /* View Calendar Button (Small Premium Pill) */
+  viewCalendarButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: BORDER_RADIUS.full,
+
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
+
   viewCalendarText: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.accent,
+    letterSpacing: 0.5,
+  },
+
+  /* ============================
+     MAIN CTA BUTTONS (Premium)
+  ============================ */
+
+  ctaButton: {
+    width: "100%",
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+    justifyContent: "center",
+
+    marginTop: SPACING.md,
+
+    backgroundColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+
+  ctaText: {
+    fontSize: 14,
+    fontWeight: "900",
     color: COLORS.background,
-    
-    
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+
+  /* ============================
+     SECONDARY BUTTON (Settings Premium)
+  ============================ */
+
+  settingsButton: {
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+    justifyContent: "center",
+
+    marginTop: SPACING.md,
+
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+
+  settingsButtonText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.background,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });
+
+
+
+
+

@@ -1,13 +1,31 @@
-// utils/getAlarmLaunchData.js
-import { NativeModules, Platform } from 'react-native';
+import { useEffect } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { resetToAlarm } from "../navigation/navigationRef";
+import { getAlarmLaunchData } from "./getAlarmLaunchData";
 
-const { AlarmModule } = NativeModules;
-export async function getAlarmLaunchData() {
-  if (Platform.OS !== 'android') return null;
+export function useAlarmLaunch() {
+  useEffect(() => {
 
-  try {
-   return await AlarmModule?.getLaunchIntentData?.();
-  } catch {
-    return null;
-  }
+    // ✅ 1. Cold start handling
+    (async () => {
+      const launchData = await getAlarmLaunchData();
+      if (launchData?.alarmId) {
+        console.log("🚀 Cold start alarm:", launchData);
+        resetToAlarm({ alarmId: launchData.alarmId });
+      }
+    })();
+
+    // ✅ 2. Warm start event handling
+    const sub = DeviceEventEmitter.addListener(
+      "ALARM_LAUNCHED",
+      payload => {
+        if (payload?.alarmId) {
+          console.log("🔥 Warm alarm event:", payload);
+          resetToAlarm({ alarmId: payload.alarmId });
+        }
+      }
+    );
+
+    return () => sub.remove();
+  }, []);
 }

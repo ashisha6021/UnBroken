@@ -12,6 +12,10 @@ object AlarmScheduler {
     alarmId: String,
     flags: Int
   ): PendingIntent? {
+    android.util.Log.d(
+      "AlarmScheduler",
+      "buildPendingIntent() alarmId=$alarmId flags=$flags"
+    )
     val intent = Intent(context, AlarmReceiver::class.java).apply {
       action = "com.unbrokenrna.ALARM_$alarmId"
     }
@@ -29,6 +33,10 @@ object AlarmScheduler {
     alarmId: String,
     triggerAt: Long
   ) {
+    android.util.Log.d(
+      "AlarmScheduler",
+      "scheduleExact() alarmId=$alarmId triggerAt=${java.util.Date(triggerAt)}"
+    )
     val intent = Intent(context, AlarmReceiver::class.java).apply {
       action = "com.unbrokenrna.ALARM_$alarmId"
       putExtra("alarmId", alarmId)
@@ -52,6 +60,7 @@ object AlarmScheduler {
   }
 
   fun cancel(context: Context, alarmId: String) {
+    android.util.Log.d("AlarmScheduler", "cancel() alarmId=$alarmId")
     val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     val pi = buildPendingIntent(
@@ -72,6 +81,10 @@ object AlarmScheduler {
   originalAlarmId: String,
   triggerAt: Long
 ) {
+  android.util.Log.d(
+    "AlarmScheduler",
+    "scheduleSnooze() schedulerId=$schedulerId originalAlarmId=$originalAlarmId triggerAt=${java.util.Date(triggerAt)}"
+  )
   val intent = Intent(context, AlarmReceiver::class.java).apply {
     action = "com.unbrokenrna.ALARM_$schedulerId"
     putExtra("alarmId", originalAlarmId) // 🔥 key

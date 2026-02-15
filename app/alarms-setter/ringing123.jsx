@@ -14,45 +14,72 @@ import {
   cancelAlarm,scheduleAlarm,stopRinging, snoozeAlarm
 
 } from '../../alarm1/alarmScheduler123';
-import { exitAppSafely } from '../brain-games/exitAppSafely';
+import { exitAlarmSafely } from '../../utils/exitAppSafely';
 
 
 
 export default function AlarmRingingScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const realm = getRealm();
-  const navigatingRef = useRef(false);
-  const {alarmId,} = route.params;
-const alarm = realm.objectForPrimaryKey('task_alarms', alarmId);
+  const actionLockedRef = useRef(false);
 
-useEffect(() => {
-  global.__ALARM_ACTIVE__ = true;
+  // -----------------------------
+  // SAFE PARAM / REALM LOOKUP
+  // -----------------------------
+  const alarmId = route.params?.alarmId;
+  console.log('[AlarmRingingScreen] mounted with route params:', route.params);
 
-  return () => {
-    global.__ALARM_ACTIVE__ = false;
-  };
-}, []);
+  let alarm = null;
+  let alarmSettings = null;
+  let taskId;
+  let dayOfWeek;
+  let time;
+  let isCritical;
 
-useEffect(() => {
-  if (!alarm) {
-   exitAppSafely();
+  try {
+    const realm = getRealm();
+
+    if (alarmId) {
+      alarm = realm.objectForPrimaryKey('task_alarms', alarmId);
+
+      if (alarm) {
+        const {
+          taskId: tId,
+          dayOfWeek: d,
+          time: t,
+          isCritical: crit,
+        } = alarm;
+
+        taskId = tId;
+        dayOfWeek = d;
+        time = t;
+        isCritical = crit;
+
+        alarmSettings = realm.objectForPrimaryKey(
+          'alarm_settings',
+          taskId
+        );
+      }
+    }
+  } catch (e) {
+    console.error('[AlarmRingingScreen] Failed to access Realm', e);
   }
-}, [alarm]);
 
-if (!alarm) return null;
+  if (!alarmId || !alarm) {
+    console.warn('[AlarmRingingScreen] Missing alarm or alarmId', {
+      alarmId,
+      hasAlarm: !!alarm,
+    });
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>⏰ Alarm Ringing...</Text>
+      <Text style={styles.subtitle}>
+        Loading alarm details...
+      </Text>
+    </View>
+  );
+}
 
-const {
-  taskId,
-  dayOfWeek,
-  time,
-  isCritical,
-} = alarm;
-
-const alarmSettings =
-  realm.objectForPrimaryKey('alarm_settings', taskId);
-
- 
 
   const requireBrainGame =
     isCritical || alarmSettings?.requireBrainGame === true;
@@ -75,61 +102,66 @@ const alarmSettings =
 
   /* -----------------------------
      STOP (NON-CRITICAL ONLY)
+     - Stop current sound
+     - Cancel current firing
+     - Schedule next occurrence
+     - Close AlarmActivity task
   ----------------------------- */
-const stopAlarm = useCallback(async () => {
-  if (requireBrainGame) return;
+  const stopAlarm = useCallback(async () => {
+    if (requireBrainGame) return;
+    if (actionLockedRef.current) return;
+    actionLockedRef.current = true;
 
-  await stopRinging();
+    try {
+      console.log('[AlarmRingingScreen.stopAlarm] pressed', {
+        alarmId,
+        taskId,
+        dayOfWeek,
+        time,
+        isCritical,
+        requireBrainGame,
+      });
+      await stopRinging();
+      await cancelAlarm(alarmId);
 
-  // 1️⃣ Cancel current alarm
-  await cancelAlarm(alarmId);
-
-  // 2️⃣ Schedule next occurrence
-  await scheduleAlarm({
-    alarmId,
-    taskId,
-    dayOfWeek,
-    time,
-    isCritical,
-  });
-
-  // 3️⃣ EXIT APP SAFELY
-  exitAppSafely();
-}, [
-  alarmId,
-  taskId,
-  dayOfWeek,
-  time,
-  isCritical,
-  requireBrainGame,
-]);
+      await scheduleAlarm({
+        alarmId,
+        taskId,
+        dayOfWeek,
+        time,
+        isCritical,
+      });
+    } finally {
+      console.log('[AlarmRingingScreen.stopAlarm] calling exitAlarmSafely()');
+      exitAlarmSafely();
+    }
+  }, [alarmId, taskId, dayOfWeek, time, isCritical, requireBrainGame]);
 
 
 
-const onSnoozePress = useCallback(async () => {
-  if (requireBrainGame || isCritical) return;
 
-  console.log('😴 Snoozing for', snoozeMinutes, 'minutes');
+  const onSnoozePress = useCallback(async () => {
+    if (requireBrainGame || isCritical) return;
+    if (actionLockedRef.current) return;
+    actionLockedRef.current = true;
 
-  // 🔴 Stop + schedule snooze (already correct)
-  await snoozeAlarm({
-    alarmId,
-    snoozeMinutes,
-  });
+    try {
+      console.log('[AlarmRingingScreen.onSnoozePress] pressed', {
+        alarmId,
+        snoozeMinutes,
+        requireBrainGame,
+        isCritical,
+      });
+      await snoozeAlarm({
+        alarmId,
+        snoozeMinutes,
+      });
+    } finally {
+      console.log('[AlarmRingingScreen.onSnoozePress] calling exitAlarmSafely()');
+      exitAlarmSafely();
+    }
+  }, [alarmId, snoozeMinutes, isCritical, requireBrainGame]);
 
-  // 🔒 Prevent double taps
-  if (navigatingRef.current) return;
-  navigatingRef.current = true;
-
-  // ⏳ IMPORTANT: delay navigation
- exitAppSafely(400);
-}, [
-  alarmId,
-  snoozeMinutes,
-  isCritical,
-  requireBrainGame,
-  navigation,
-]);
 
   /* -----------------------------
      START BRAIN GAME

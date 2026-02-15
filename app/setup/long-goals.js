@@ -27,6 +27,12 @@ export default function LongGoalsScreen({ navigation, route }) {
   const [description, setDescription] = useState('');
   const [activeEditId, setActiveEditId] = useState(null);
   const [deadline, setDeadline] = useState(null);
+  const [expandedGoalId, setExpandedGoalId] = useState(null);
+
+const toggleGoalExpand = (id) => {
+  setExpandedGoalId(prev => (prev === id ? null : id));
+};
+
 
   const hasPrefilled = useRef(false);
   const scrollRef = useRef(null);
@@ -149,56 +155,93 @@ export default function LongGoalsScreen({ navigation, route }) {
           <View style={styles.goalsList}>
             <Text style={styles.sectionTitle}>Your Long-Term Goals</Text>
 
-            {longGoals.map(goal => (
-              <View key={goal.id} style={styles.goalItem}>
-                <Text style={styles.goalTitle}>{goal.title}</Text>
+           {longGoals.map(goal => {
+  const isExpanded = expandedGoalId === goal.id;
 
-                {goal.description && (
-                  <Text style={styles.goalDescription}>{goal.description}</Text>
-                )}
+  return (
+    <View key={goal.id} style={styles.goalItem}>
 
-                <Text style={styles.goalDeadline}>
-                  Deadline: {formatDateDisplay(goal.deadline)}
-                </Text>
+      {/* TITLE + SHOW MORE */}
+      <TouchableOpacity
+        onPress={() => toggleGoalExpand(goal.id)}
+        activeOpacity={0.8}
+      >
+        <Text
+          style={styles.goalTitle}
+          numberOfLines={isExpanded ? 10 : 2}
+          ellipsizeMode="tail"
+        >
+          {goal.title}
+        </Text>
 
-                <View style={styles.goalFooter}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setTitle(goal.title);
-                      setDescription(goal.description || '');
-                      setDeadline(goal.deadline);
-                      setActiveEditId(goal.id);
-                      hasPrefilled.current = true;
+        {/* SHOW MORE BUTTON */}
+    {goal.title.length > 35 && (
+  <Text style={styles.showMoreText}>
+    {isExpanded ? "▲ Show less" : "▼ Show more"}
+  </Text>
+)}
 
-                      requestAnimationFrame(() => {
-                        scrollRef.current?.scrollTo({ y: 0, animated: true });
-                      });
-                    }}
-                  >
-                    <Text style={styles.editText}>EDIT</Text>
-                  </TouchableOpacity>
+      </TouchableOpacity>
 
-                  <View style={styles.goalFooterRight}>
-                    <Text style={styles.badge}>
-                      {Math.round(goal.completionPercentage || 0)}%
-                    </Text>
+      {/* DESCRIPTION (ONLY IF EXPANDED) */}
+      {isExpanded && goal.description && (
+        <Text style={styles.goalDescription}>
+          {goal.description}
+        </Text>
+      )}
 
-                    <TouchableOpacity
-                      style={styles.addShortGoalButton}
-                      onPress={() =>
-                        navigation.navigate('Short-Goal Setting', {
-                          longGoalId: goal.id,
-                        })
-                      }
-                    >
-                      <Text style={styles.addShortGoalText}>
-                        + Short Goal
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ))}
+      {/* DEADLINE */}
+      <Text style={styles.goalDeadline}>
+        Deadline: {formatDateDisplay(goal.deadline)}
+      </Text>
+      <View style={styles.divider} />
+      {/* FOOTER */}
+      <View style={styles.goalFooter}>
+        {/* EDIT */}
+       <TouchableOpacity
+        style={styles.editGoalButton}
+        onPress={() => {
+          setTitle(goal.title);
+          setDescription(goal.description || '');
+          setDeadline(goal.deadline);
+          setActiveEditId(goal.id);
+          hasPrefilled.current = true;
+
+          requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+          });
+        }}
+      >
+        <Text style={styles.editGoalButtonText}>
+          EDIT
+        </Text>
+      </TouchableOpacity>
+
+
+        {/* RIGHT SIDE */}
+        <View style={styles.goalFooterRight}>
+          <Text style={styles.badge}>
+            {Math.round(goal.completionPercentage || 0)}%
+          </Text>
+
+          <TouchableOpacity
+            style={styles.addShortGoalButton}
+            onPress={() =>
+              navigation.navigate("Short-Goal Setting", {
+                longGoalId: goal.id,
+              })
+            }
+          >
+            <Text style={styles.addShortGoalText}>
+              + Short Goal
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+})}
+
           </View>
         )}
       </ScrollView>
@@ -210,157 +253,234 @@ export default function LongGoalsScreen({ navigation, route }) {
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.lg ,paddingTop:0},
+  /* ===========================
+     BASE
+  ============================ */
 
-  goalHeaderRight: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: SPACING.sm,
-  gap: SPACING.sm,
-},
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
 
-addShortGoalButton: {
-  marginBottom: 0,
-  paddingHorizontal: SPACING.sm,
-  paddingVertical: 4,
-  borderRadius: BORDER_RADIUS.sm,
-  backgroundColor: COLORS.accent,
-},
+  content: {
+    padding: SPACING.xl,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xxl,
+  },
 
-addShortGoalText: {
-  ...TYPOGRAPHY.caption,
-  color: COLORS.background,
-  fontWeight: '600',
-},
+  /* ===========================
+     TOP INSTRUCTION
+  ============================ */
 
   instruction: {
-    ...TYPOGRAPHY.body,
+    fontSize: 20,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    marginBottom: SPACING.lg,
+    lineHeight: 28,
+    marginBottom: SPACING.xl,
+    letterSpacing: -0.3,
   },
 
-  form: { marginBottom: SPACING.xl },
+  /* ===========================
+     FORM AREA
+  ============================ */
+
+  form: {
+    marginBottom: SPACING.xxl,
+  },
 
   input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+
+    fontSize: 14,
+    fontWeight: "600",
     color: COLORS.textPrimary,
+
     marginBottom: SPACING.md,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
 
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
-
-  label: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+  textArea: {
+    minHeight: 90,
+    textAlignVertical: "top",
   },
 
-  row: { marginBottom: SPACING.sm },
-
-  pill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginRight: SPACING.sm,
-  },
-
-  pillActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-
-  pillText: { color: COLORS.textSecondary },
-  pillTextActive: { color: COLORS.background, fontWeight: '600' },
+  /* ===========================
+     ADD GOAL BUTTON
+  ============================ */
 
   addButton: {
     backgroundColor: COLORS.accent,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
     marginTop: SPACING.md,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 8,
   },
 
   addButtonText: {
-    ...TYPOGRAPHY.button,
+    fontSize: 14,
+    fontWeight: "900",
     color: COLORS.background,
+    letterSpacing: 1,
   },
 
-  goalsList: { marginBottom: SPACING.xl },
+  /* ===========================
+     GOALS LIST HEADER
+  ============================ */
+
+  goalsList: {
+    marginTop: SPACING.lg,
+  },
 
   sectionTitle: {
-    ...TYPOGRAPHY.h3,
+    fontSize: 22,
+    fontWeight: "900",
     color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    letterSpacing: -0.5,
   },
+
+  /* ===========================
+     GOAL CARD (Premium)
+  ============================ */
 
   goalItem: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.sm,
-  },
+    backgroundColor: COLORS.surfaceElevated,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    marginBottom: SPACING.lg,
 
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
 
   goalTitle: {
-    ...TYPOGRAPHY.body,
+    fontSize: 15,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    fontWeight: '600',
+    lineHeight: 22,
   },
 
-  badge: {
-    backgroundColor: COLORS.accent,
-    color: COLORS.background,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    fontWeight: '600',
+  showMoreText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 4,
+    fontWeight: "500",
   },
 
   goalDescription: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: 13,
     color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
+    lineHeight: 18,
   },
 
   goalDeadline: {
-    ...TYPOGRAPHY.caption,
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.textMuted,
-    marginTop: SPACING.xs,
-  },
-
-  editText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.accent,
     marginTop: SPACING.sm,
-    fontWeight: '600',
   },
-goalFooter: {
-  flexDirection: 'row',
-  justifyContent: 'space-between', 
-  alignItems: 'center',
-  marginTop: SPACING.md,
-},
 
-goalFooterRight: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: SPACING.sm,
-},
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginVertical: SPACING.md,
+  },
 
+  /* ===========================
+     FOOTER ROW
+  ============================ */
 
+  goalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: SPACING.md,
+  },
+
+  goalFooterRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+  },
+
+  /* ===========================
+     COMPLETION BADGE
+  ============================ */
+
+  badge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+
+    backgroundColor: "rgba(0,255,136,0.15)",
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.accent,
+  },
+
+  /* ===========================
+     EDIT BUTTON
+  ============================ */
+
+  editGoalButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  editGoalButtonText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 0.6,
+  },
+
+  /* ===========================
+     + SHORT GOAL BUTTON
+  ============================ */
+
+  addShortGoalButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  addShortGoalText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 0.6,
+  },
 });
+

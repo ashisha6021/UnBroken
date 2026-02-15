@@ -8,7 +8,7 @@ import {
   setBrainGameCallbacks,
   resetBrainGameController,
 } from './BrainGameController';
-import { exitAppSafely } from './exitAppSafely';
+import { exitAlarmSafely } from '../../utils/exitAppSafely';
 import { completeAlarm } from './alarmCompletion';
 
 export default function BrainGameHub() {
@@ -30,7 +30,7 @@ export default function BrainGameHub() {
   async function handleSuccess() {
      console.log('✅ [BrainGameHub] Alarm completed');
     await completeAlarm({ alarmId });
-    exitAppSafely(0);
+    exitAlarmSafely();
   }
 
   function handleFail() {

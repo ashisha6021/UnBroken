@@ -59,15 +59,21 @@ export async function scheduleAlarm({
       : dayOfWeek;
 
   if (typeof dayIndex !== 'number') {
-    console.error('Invalid dayOfWeek:', dayOfWeek);
+    console.error('[alarmScheduler] Invalid dayOfWeek:', dayOfWeek);
     return;
   }
 
   const triggerAt = getNextTriggerMillis(dayIndex, time);
 
-  console.log(
-    `⏰ Scheduling alarm ${alarmId} at ${new Date(triggerAt).toString()}`
-  );
+  console.log('[alarmScheduler] scheduleAlarm()', {
+    alarmId,
+    taskId,
+    dayOfWeek,
+    resolvedDayIndex: dayIndex,
+    time,
+    isCritical,
+    triggerAt: new Date(triggerAt).toString(),
+  });
   
 
 
@@ -84,9 +90,10 @@ export async function cancelAlarm(alarmId) {
   if (Platform.OS !== 'android') return;
 
   try {
+    console.log('[alarmScheduler] cancelAlarm()', { alarmId });
     await AlarmModule.cancelScheduledAlarm(alarmId);
   } catch (e) {
-    console.warn('Cancel alarm failed safely', e);
+    console.warn('[alarmScheduler] Cancel alarm failed safely', e);
   }
 }
 
@@ -96,6 +103,7 @@ export async function cancelAlarm(alarmId) {
 -------------------------------------------------- */
 export async function isAlarmScheduled1(alarmId) {
   if (Platform.OS !== 'android') return false;
+  console.log('[alarmScheduler] isAlarmScheduled1() check for', alarmId);
   return AlarmModule.isAlarmScheduled(alarmId);
 }
 
@@ -165,6 +173,7 @@ export async function cancelAlarmsForTask(taskId, alarms) {
 
 export async function stopRinging() {
   if (Platform.OS !== 'android') return;
+  console.log('[alarmScheduler] stopRinging() called');
   await AlarmModule.stopRinging();
 }
 
@@ -184,13 +193,18 @@ export async function snoozeAlarm({
       : 5;
 
   try {
-    console.log('😴 Snoozing alarm for', minutes, 'minutes');
-    await AlarmModule.stopRinging();
+    console.log('[alarmScheduler] snoozeAlarm()', {
+      alarmId,
+      snoozeMinutes,
+      minutes,
+      snoozeAlarmId,
+    });
+    
     await AlarmModule.cancelScheduledAlarm(snoozeAlarmId);
     const triggerAt = Date.now() + minutes * 60 * 1000;
 
     await AlarmModule.scheduleSnooze(snoozeAlarmId,alarmId,triggerAt);
-
+   await AlarmModule.stopRinging();
     console.log(
       '⏰ Snooze scheduled at',
       new Date(triggerAt).toLocaleTimeString()

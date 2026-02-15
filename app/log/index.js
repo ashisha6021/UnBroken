@@ -147,60 +147,85 @@ export default function LogScreen() {
       <Text style={styles.subtitle}>Mark what you've completed</Text>
 
       {todayTasks.map(task => {
-        const shortGoal = shortGoals.find(g => g.id === task.shortGoalId);
-        const longGoal = shortGoal
-          ? longGoals.find(g => g.id === shortGoal.longGoalId)
-          : null;
+  const shortGoal = shortGoals.find(g => g.id === task.shortGoalId);
+  const longGoal = shortGoal
+    ? longGoals.find(g => g.id === shortGoal.longGoalId)
+    : null;
 
-        const completed = Boolean(taskCompletions[task.id]);
+  const completed = Boolean(taskCompletions[task.id]);
 
-        return (
-          <View key={task.id} style={styles.taskCard}>
-            <TouchableOpacity
-              style={styles.taskHeader}
-              onPress={() => toggleTask(task.id)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  completed && styles.checkboxChecked,
-                ]}
+  return (
+    <View key={task.id}>
+      
+      {/* ✅ TASK CARD */}
+      <View style={styles.taskCard}>
+        <View style={styles.taskAccentBar2} />
+        <TouchableOpacity
+          style={styles.taskHeader}
+          onPress={() => toggleTask(task.id)}
+          activeOpacity={0.7}
+        >
+          <View
+            style={[
+              styles.checkbox,
+              completed && styles.checkboxChecked,
+            ]}
+          >
+            {completed && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+
+          <View style={styles.taskInfo}>
+            <Text style={styles.taskName}>{task.name}</Text>
+
+            {shortGoal && (
+              <Text
+                style={styles.taskGoal}
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
-                {completed && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-
-              <View style={styles.taskInfo}>
-                <Text style={styles.taskName}>{task.name}</Text>
-                {shortGoal && (
-                  <Text style={styles.taskGoal}>
-                    {shortGoal.title} → {longGoal?.title}
-                  </Text>
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {completed && (
-              <TextInput
-                style={styles.noteInput}
-                placeholder="Add a note (optional)"
-                placeholderTextColor={COLORS.textMuted}
-                value={taskNotes[task.id] || ''}
-                onChangeText={text =>
-                  setTaskNotes(prev => ({ ...prev, [task.id]: text }))
-                }
-                multiline
-              />
+                {shortGoal.title} → {longGoal?.title}
+              </Text>
             )}
           </View>
-        );
-      })}
+        </TouchableOpacity>
+
+        {/* ✅ NOTE INPUT */}
+        {completed && (
+          <TextInput
+            style={styles.noteInput}
+            placeholder="Add a note (optional)"
+            placeholderTextColor={COLORS.textMuted}
+            value={taskNotes[task.id] || ''}
+            onChangeText={text =>
+              setTaskNotes(prev => ({
+                ...prev,
+                [task.id]: text,
+              }))
+            }
+            multiline
+          />
+        )}
+      </View>
+
+      {/* ✅ PREMIUM FADE DIVIDER */}
+      <View
+        style={{
+          height: 1,
+          backgroundColor: "rgba(255,255,255,0.06)",
+          marginVertical: 8,
+        }}
+      />
+    </View>
+  );
+})}
+
     
       {/* <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>SAVE PROGRESS</Text>
       </TouchableOpacity> */}
+     <BottomSaveButton onPress={handleSave} />
     </ScrollView>
-    <BottomSaveButton onPress={handleSave} />
+     
     </ScreenWrapper>
  
   );
@@ -209,100 +234,160 @@ export default function LogScreen() {
 /* ---------------- STYLES (UNCHANGED) ---------------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.lg,paddingBottom:80  },
-  loadingText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.xxl,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  emptyText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.xxl,
+
+  content: {
+    padding: SPACING.lg,
+    paddingBottom: 110,
   },
+
+  /* ---------------- HEADER ---------------- */
+
   title: {
-    ...TYPOGRAPHY.h1,
+    fontSize: 38,
+    fontWeight: "900",
     color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
+    letterSpacing: -1,
+    marginBottom: 6,
   },
+
   subtitle: {
-    ...TYPOGRAPHY.body,
+    fontSize: 16,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xl,
+    opacity: 0.8,
   },
+
+  /* ---------------- EMPTY / LOADING ---------------- */
+
+  loadingText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginTop: SPACING.xxl,
+  },
+
+  emptyText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginTop: SPACING.xxl,
+  },
+
+  /* ---------------- TASK CARD ---------------- */
+
   taskCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.textPrimary,
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: 22,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
+
+    /* Premium depth */
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  taskHeader: { flexDirection: 'row', alignItems: 'center' },
+
+  taskHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+
+  /* ---------------- CHECKBOX PREMIUM ---------------- */
+
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: BORDER_RADIUS.sm,
+    width: 30,
+    height: 30,
+    borderRadius: 999,
     borderWidth: 2,
-    borderColor: COLORS.textPrimary,
+    borderColor: COLORS.borderLight,
     marginRight: SPACING.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 3,
   },
+
   checkboxChecked: {
     backgroundColor: COLORS.accent,
     borderColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
   },
+
   checkmark: {
     color: COLORS.background,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "900",
   },
-  taskInfo: { flex: 1 },
+
+  /* ---------------- TASK TEXT ---------------- */
+
+  taskInfo: {
+    flex: 1,
+  },
+
   taskName: {
-    ...TYPOGRAPHY.body,
+    fontSize: 17,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
+    marginBottom: 4,
+    lineHeight: 22,
   },
+
   taskGoal: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: "500",
+    lineHeight: 18,
+    opacity: 0.75,
   },
+
+  /* ---------------- NOTE INPUT (Glass Style) ---------------- */
+
   noteInput: {
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.sm,
     marginTop: SPACING.md,
-    minHeight: 40,
-  color:COLORS.textPrimary
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  saveButton: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.lg,
-  },
-  saveButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-    textTransform: 'uppercase',
-  },
+
+  /* ---------------- BACK BUTTON ---------------- */
+
   backButton: {
     backgroundColor: COLORS.surface,
     paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
     marginTop: SPACING.lg,
   },
+
   backButtonText: {
-    ...TYPOGRAPHY.button,
+    fontSize: 14,
+    fontWeight: "800",
     color: COLORS.textPrimary,
+    letterSpacing: 1,
   },
+   taskAccentBar2: {
+  position: "absolute",
+  left: 0,
+  top: 12,
+  bottom: 12,
+  width: 4,
+  borderRadius: 10,
+  backgroundColor: COLORS.warning, 
+},
 });

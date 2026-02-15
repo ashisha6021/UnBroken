@@ -160,160 +160,290 @@ export default function ResultScreen() {
 // STYLES
 // --------------------
 const styles = StyleSheet.create({
+  /* ============================
+     SCREEN BASE
+  ============================ */
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: SPACING.xl,
   },
-  containerSuccess: {
-    backgroundColor: COLORS.successDark,
-  },
+
+  /* ============================
+     BACKGROUND STATES
+  ============================ */
+
+ containerSuccess: {
+  backgroundColor: "#00B85C", // darker rich green
+},
+
+
   containerGuilt: {
-    backgroundColor: COLORS.background,
+    backgroundColor: "#0D0D0D", // ✅ Dark Neutral Premium
   },
+
   containerFailure: {
-    backgroundColor: '#1A0000',
+    backgroundColor: "#2A0000", // ✅ Deep Premium Red
   },
+
+  /* ============================
+     CONTENT WRAPPER
+  ============================ */
+
   content: {
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 420,
   },
-  emoji: {
-    fontSize: 64,
-    marginBottom: SPACING.lg,
-  },
+
+  /* ============================
+     EMOJI ICON
+  ============================ */
+
+emoji: {
+  fontSize: 72,
+  marginBottom: SPACING.lg,
+  textShadowColor: "rgba(255,255,255,0.35)",
+  textShadowRadius: 15,
+},
+
+
+  /* ============================
+     TITLES
+  ============================ */
+
   title: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.background,
+    fontSize: 34,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    textAlign: "center",
+    letterSpacing: -1,
     marginBottom: SPACING.sm,
-    textAlign: 'center',
   },
+
   titleGuilt: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.guilt,
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#FFC107",
+    textAlign: "center",
     marginBottom: SPACING.sm,
-    textAlign: 'center',
   },
+
   titleFailure: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.error,
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#FF3B30",
+    textAlign: "center",
     marginBottom: SPACING.sm,
-    textAlign: 'center',
   },
+
+  /* ============================
+     SUBTITLES
+  ============================ */
+
   subtitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.background,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: SPACING.xs,
-    textAlign: 'center',
+    textAlign: "center",
+    opacity: 0.95,
   },
+
   subtitleGuilt: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.textSecondary,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#BBBBBB",
     marginBottom: SPACING.xs,
-    textAlign: 'center',
+    textAlign: "center",
   },
+
   subtitleFailure: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.textSecondary,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#BBBBBB",
     marginBottom: SPACING.xs,
-    textAlign: 'center',
+    textAlign: "center",
   },
+
+  /* ============================
+     MESSAGES
+  ============================ */
+
   message: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.background,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
     marginBottom: SPACING.xl,
-    textAlign: 'center',
+    textAlign: "center",
+    opacity: 0.9,
   },
+
   messageGuilt: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textMuted,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#888",
     marginBottom: SPACING.xl,
-    textAlign: 'center',
+    textAlign: "center",
   },
+
   messageFailure: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textMuted,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#888",
     marginBottom: SPACING.xl,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  statsContainer: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.xl,
-    width: '100%',
-    alignItems: 'center',
-  },
+
+  /* ============================
+     PREMIUM GLASS STATS CARD
+  ============================ */
+
+statsContainer: {
+  width: "100%",
+  
+  paddingVertical: 50,
+  paddingHorizontal: 20,
+
+  borderRadius: 26,
+
+  // backgroundColor: "rgba(0,0,0,0.15)", // ✅ dark glass contrast
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.20)",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.9,
+  shadowRadius: 18,
+  elevation: 5,
+
+  alignItems: "center",
+  marginBottom: 80,
+},
+
+
   statsText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.background,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: SPACING.sm,
   },
+
   statsTextGuilt: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#CCCCCC",
     marginBottom: SPACING.sm,
   },
+
   statsTextFailure: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#CCCCCC",
     marginBottom: SPACING.sm,
   },
+
+  /* ============================
+     PERCENTAGE BIG
+  ============================ */
+
   percentage: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.background,
-    fontSize: 48,
-  },
+  fontSize: 64,
+  fontWeight: "900",
+  color: "#FFFFFF",
+  letterSpacing: -2,
+},
+
   percentageGuilt: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.guilt,
-    fontSize: 48,
+    fontSize: 54,
+    fontWeight: "900",
+    color: "#FFC107",
   },
+
   percentageFailure: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.error,
-    fontSize: 48,
+    fontSize: 54,
+    fontWeight: "900",
+    color: "#FF3B30",
   },
+
+  /* ============================
+     WARNING TEXT
+  ============================ */
+
   warningText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textMuted,
-    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#777",
+    textAlign: "center",
     marginBottom: SPACING.xl,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
+
+  /* ============================
+     PREMIUM CONTINUE BUTTON
+  ============================ */
+
   continueButton: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER_RADIUS.md,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  continueButtonSuccess: {
-    backgroundColor: COLORS.background,
-  },
+
+  /* Success Button */
+ continueButtonSuccess: {
+  backgroundColor: "rgba(255,255,255,0.18)", // ✅ frosted glass
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.25)",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.25,
+  shadowRadius: 14,
+  elevation: 10,
+},
+
+
+  /* Partial Button */
   continueButtonGuilt: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: "rgba(255,255,255,0.12)",
+
+    shadowColor: "#FFC107",
   },
+
+  /* Failure Button */
   continueButtonFailure: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: COLORS.error,
+    borderColor: "rgba(255,255,255,0.12)",
+
+    shadowColor: "#FF3B30",
   },
+
   continueButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-    textTransform: 'uppercase',
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: "#FFFFFF",
   },
+
   continueButtonTextSuccess: {
-    color: COLORS.success,
+   color: "#FFFFFF", // ✅ Green text on white button
   },
+
+  /* ============================
+     LOADING TEXT
+  ============================ */
+
   text: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#AAA",
   },
 });

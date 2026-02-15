@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   FlatList,
-  Alert,
+  Alert, Modal, 
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { addShortGoal, updateShortGoal } from '../../storage/storage-sqlite';
@@ -35,6 +35,8 @@ export default function ShortGoalsScreen({ navigation, route }) {
     routeLongGoalId || longGoals[0]?.id || ''
   );
   const [deadline, setDeadline] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [expandedGoalId, setExpandedGoalId] = useState(null);
 
   const editingGoal = isEditing
     ? shortGoals.find(g => g.id === editingGoalId)
@@ -93,6 +95,7 @@ export default function ShortGoalsScreen({ navigation, route }) {
 const activeLongGoal = longGoals.find(
   lg => lg.id === longGoalId
 );
+const hasLongTitles = longGoals.some(goal => goal.title.length > 18);
 
 const longGoalDeadline = activeLongGoal?.deadline
   ? new Date(activeLongGoal.deadline)
@@ -185,7 +188,66 @@ const longGoalDeadline = activeLongGoal?.deadline
               Deadline: {linkedLongGoal.deadline || '—'}
             </Text>
           </View>
-        ) : (
+        ) : hasLongTitles ? (
+            /* ✅ MODAL BUTTON MODE */
+            <>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {longGoalId
+                    ? longGoals.find(g => g.id === longGoalId)?.title
+                    : "Select a Long-Term Goal"}
+                </Text>
+              </TouchableOpacity>
+
+              {/* ✅ MODAL GOES HERE */}
+              <Modal visible={modalVisible} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <Text style={styles.modalTitle}>
+                      Choose Long-Term Goal
+                    </Text>
+
+                    <ScrollView>
+                      {longGoals.map(item => (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[
+                            styles.modalItem,
+                            longGoalId === item.id && styles.modalItemActive,
+                          ]}
+                          onPress={() => {
+                            setLongGoalId(item.id);
+                            setModalVisible(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.modalItemText,
+                              longGoalId === item.id &&
+                                styles.modalItemTextActive,
+                            ]}
+                          >
+                            {item.title}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.closeButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </>
+          ) 
+        : ( 
           <FlatList
             ref={listRef}
             horizontal
@@ -220,6 +282,7 @@ const longGoalDeadline = activeLongGoal?.deadline
       </View>
 
       {/* FORM */}
+      <Text style={styles.label}>Add Long-Term Goal</Text>
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -269,42 +332,81 @@ const longGoalDeadline = activeLongGoal?.deadline
           <Text style={styles.sectionTitle}>Short-Term Goals</Text>
 
           {filteredShortGoals.map(goal => (
-            <View key={goal.id} style={styles.existingGoalCard}>
-              <View style={styles.goalInfo}>
-                <Text style={styles.existingGoalTitle}>{goal.title}</Text>
-                <Text style={styles.existingGoalProgress}>
-                  {Math.round(goal.completionPercentage || 0)}% complete
-                </Text>
-              </View>
+    <View key={goal.id} style={styles.existingGoalCard}>
 
-              <View style={styles.goalActions}>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() =>
-                    navigation.navigate('Short-Goal Setting', {
-                      editingGoalId: goal.id,
-                    })
-                  }
-                >
-                  <Text style={styles.editButtonText}>EDIT</Text>
-                </TouchableOpacity>
+  {/* TOP: TITLE */}
+  <TouchableOpacity
+    onPress={() =>
+      setExpandedGoalId(expandedGoalId === goal.id ? null : goal.id)
+    }
+    activeOpacity={0.8}
+  >
+    <Text
+      style={styles.existingGoalTitle}
+      numberOfLines={expandedGoalId === goal.id ? 10 : 2}
+      ellipsizeMode="tail"
+    >
+      {goal.title}
+    </Text>
 
-                <TouchableOpacity
-                  style={styles.addTaskButton}
-                  onPress={() =>
-                    navigation.navigate('Task Setting', {
-                      shortGoalId: goal.id,
-                      longGoalId: goal.longGoalId,
-                    })
-                  }
-                >
-                  <Text style={styles.addTaskButtonText}>ADD TASK</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+    {/* Expand Hint */}
+    {goal.title.length > 40 && (
+      <Text style={styles.expandHint}>
+        {expandedGoalId === goal.id ? "Show less ▲" : "Read more ▼"}
+      </Text>
+    )}
+  </TouchableOpacity>
+
+  <View
+  style={{
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginVertical: 12,
+  }}
+/>
+
+
+  {/* BOTTOM ROW: % + BUTTONS */}
+  <View style={styles.bottomRow}>
+
+    {/* % Complete */}
+    <Text style={styles.existingGoalProgress}>
+      {Math.round(goal.completionPercentage || 0)}% complete
+    </Text>
+
+    {/* Buttons */}
+    <View style={styles.goalActions}>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() =>
+          navigation.navigate("Short-Goal Setting", {
+            editingGoalId: goal.id,
+          })
+        }
+      >
+        <Text style={styles.editButtonText}>EDIT</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.addTaskButton}
+        onPress={() =>
+          navigation.navigate("Task Setting", {
+            shortGoalId: goal.id,
+            longGoalId: goal.longGoalId,
+          })
+        }
+      >
+        <Text style={styles.addTaskButtonText}>ADD TASK</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</View>
+
+
           ))}
         </View>
       )}
+
     </ScrollView>
   );
 }
@@ -312,200 +414,392 @@ const longGoalDeadline = activeLongGoal?.deadline
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
+  /* ===========================
+     BASE
+  ============================ */
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
   content: {
-    padding: SPACING.lg,paddingTop:14,
+    padding: SPACING.xl,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xxl,
   },
+
+  /* ===========================
+     HEADER TEXT
+  ============================ */
+
   instruction: {
-    ...TYPOGRAPHY.body,
+    fontSize: 20,
+    fontWeight: "800",
     color: COLORS.textPrimary,
-    marginBottom: SPACING.lg,
+    lineHeight: 28,
+    marginBottom: SPACING.xl,
+    letterSpacing: -0.3,
   },
-  selectorContainer: {
-    marginBottom: SPACING.lg,
-  },
+
+  /* ===========================
+     LABELS
+  ============================ */
+
   label: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textMuted,
     marginBottom: SPACING.sm,
-  },
-  selectorItem: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginRight: SPACING.sm,
-  },
-  selectorItemActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  selectorText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  selectorTextActive: {
-    color: COLORS.background,
-    fontWeight: '600',
-  },
-  form: {
-    marginTop: SPACING.md,
-  },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  saveButton: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.md,
-  },
-  saveButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-    textTransform: 'uppercase',
-  },
-  row: { marginBottom: SPACING.sm },
-
-  pill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginRight: SPACING.sm,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
 
-  pillActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
+  /* ===========================
+     LONG GOAL SELECTOR
+  ============================ */
 
-  pillText: { color: COLORS.textSecondary },
-  pillTextActive: { color: COLORS.background, fontWeight: '600' },
-
-  // Existing goals list styles
-  existingGoalsContainer: {
+  selectorContainer: {
     marginBottom: SPACING.xl,
   },
 
-   sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-    fontColor: '#1F1F1F',
-    paddingTop: SPACING.md,
+  selectorItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surfaceElevated,
+    marginRight: SPACING.sm,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  existingGoalCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+
+  selectorItemActive: {
+    backgroundColor: COLORS.accent,
   },
-  goalInfo: {
-    flex: 1,
-  },
-  existingGoalTitle: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  existingGoalLink: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.accent,
-    marginBottom: SPACING.xs,
-  },
-  existingGoalProgress: {
-    ...TYPOGRAPHY.bodySmall,
+
+  selectorText: {
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.textSecondary,
   },
-  goalActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  editButton: {
-    marginVertical: SPACING.sm,
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-  },
-  editButtonText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.accent,
-    fontWeight: '600',
-  },
-  addTaskButton: {
-  
-     marginVertical: SPACING.sm,
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
 
-  },
-  addTaskButtonLarge:{
-      backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center'
-  },
-  addTaskButtonText: {
-    ...TYPOGRAPHY.bodySmall,
+  selectorTextActive: {
     color: COLORS.background,
-    fontWeight: '600',
+    fontWeight: "800",
   },
 
-  // Button container styles
+  /* ===========================
+     LOCKED LONG GOAL
+  ============================ */
+
+  lockedLongGoal: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+
+  lockedLongGoalText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    lineHeight: 22,
+  },
+
+  goalDeadline: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 6,
+    fontWeight: "600",
+  },
+
+  /* ===========================
+     FORM INPUTS
+  ============================ */
+
+  form: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xxl,
+  },
+
+  input: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+
+    marginBottom: SPACING.md,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  textArea: {
+    minHeight: 90,
+    textAlignVertical: "top",
+  },
+
+  /* ===========================
+     BUTTONS
+  ============================ */
+
   buttonContainer: {
     gap: SPACING.md,
+    marginTop: SPACING.sm,
   },
-  lockedLongGoal: {
 
-  
-  backgroundColor: COLORS.accent,
-  borderWidth: 1,
-  borderColor: COLORS.border,
-  borderRadius: BORDER_RADIUS.md,
-  padding: SPACING.md,
-},
+  saveButton: {
+    backgroundColor: COLORS.accent,
+    paddingVertical: 18,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
 
-lockedLongGoalText: {
-  ...TYPOGRAPHY.body,
-  color: COLORS.background,
-  fontWeight: '600',
-},
-  goalDeadline: {
-    ...TYPOGRAPHY.caption,
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: "900",
     color: COLORS.background,
-    marginTop: SPACING.xs,
+    letterSpacing: 1,
+  },
+
+  addTaskButtonLarge: {
+    // backgroundColor: "rgba(0,255,136,0.15)",
+    backgroundColor:COLORS.accent,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    paddingVertical: 16,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+  },
+
+  /* ===========================
+     SECTION TITLE
+  ============================ */
+
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.lg,
+    letterSpacing: -0.5,
+  },
+
+  /* ===========================
+     EXISTING SHORT GOAL CARD
+  ============================ */
+
+  existingGoalCard: {
+    backgroundColor: COLORS.surfaceElevated,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    marginBottom: SPACING.lg,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+
+  existingGoalTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    lineHeight: 22,
+  },
+
+  expandHint: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 4,
+  },
+
+  /* ===========================
+     BOTTOM ROW
+  ============================ */
+
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: SPACING.md,
+  },
+
+  /* ===========================
+     PROGRESS BADGE
+  ============================ */
+
+  existingGoalProgress: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.full,
+
+    backgroundColor: "rgba(0,255,136,0.12)",
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.accent,
+  },
+
+  /* ===========================
+     ACTION BUTTONS
+  ============================ */
+
+  goalActions: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+  },
+
+  editButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  editButtonText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 0.6,
+  },
+
+  addTaskButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.accent,
+
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+
+  addTaskButtonText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: COLORS.background,
+    letterSpacing: 0.6,
+  },
+
+  /* ===========================
+     MODAL PREMIUM LOOK
+  ============================ */
+  /* ===========================
+   DROPDOWN BUTTON (Premium)
+=========================== */
+
+dropdownButton: {
+  backgroundColor: COLORS.surfaceElevated,
+  borderRadius: BORDER_RADIUS.xl,
+  paddingVertical: 16,
+  paddingHorizontal: 18,
+
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.3,
+  shadowRadius: 10,
+  elevation: 6,
+},
+
+dropdownButtonText: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: COLORS.textPrimary,
+  flex: 1,
+},
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "center",
+    padding: SPACING.lg,
+  },
+
+  modalBox: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    maxHeight: "75%",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.lg,
+  },
+
+  modalItem: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.surface,
+  },
+
+  modalItemActive: {
+    backgroundColor: "rgba(0,255,136,0.15)",
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+
+  modalItemText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+
+  modalItemTextActive: {
+    color: COLORS.accent,
+    fontWeight: "800",
+  },
+
+  closeButton: {
+    marginTop: SPACING.lg,
+    paddingVertical: 14,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+  },
+
+  closeButtonText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
 });
+

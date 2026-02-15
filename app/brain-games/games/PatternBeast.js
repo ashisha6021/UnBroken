@@ -8,7 +8,7 @@ import useGameTimer from '../useGameTimer';
 import useAntiForceClose from '../useAntiForceClose';
 import { GAME_CONFIG } from '../gameConfig';
 import { rand, shuffle } from './helpers';
-import { exitAppSafely } from '../exitAppSafely';
+
 import { triggerFail, triggerSuccess } from '../BrainGameController';
 import {completeAlarm} from '../alarmCompletion'
 
