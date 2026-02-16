@@ -4,53 +4,46 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
 
   companion object {
-    private const val TAG = "AlarmReceiver"
+    private const val TAG = "UNBROKEN_ALARM_DATA"
   }
 
+
   override fun onReceive(context: Context, intent: Intent) {
+    Log.e(TAG, "🔥🔥🔥 RECEIVER TRIGGERED FOR REAL 🔥🔥🔥")
+
+    Log.d(TAG, "==============================")
+    Log.d(TAG, "AlarmReceiver FIRED")
+    Log.d(TAG, "intent=$intent extras=${intent.extras}")
 
     val alarmId = intent.getStringExtra("alarmId")
 
     if (alarmId.isNullOrEmpty()) {
-      Log.w(TAG, "onReceive() Missing alarmId → ignoring")
+      Log.e(TAG, "ERROR: alarmId missing → Receiver exiting")
       return
     }
 
-    Log.d(TAG, "onReceive() Alarm Fired alarmId=$alarmId")
+    Log.d(TAG, "alarmId RECEIVED: $alarmId")
 
-    // ✅ 1. OPEN UI FIRST (NO CLEAR_TOP)
-    val activityIntent = Intent(context, AlarmActivity::class.java).apply {
+    val serviceIntent = Intent(context, AlarmService::class.java).apply {
       putExtra("alarmId", alarmId)
-      addFlags(
-        Intent.FLAG_ACTIVITY_NEW_TASK or
-        Intent.FLAG_ACTIVITY_SINGLE_TOP
-      )
     }
 
-    context.startActivity(activityIntent)
+    Log.d(TAG, "Starting AlarmService now...")
 
-    // ✅ 2. START SERVICE AFTER DELAY
-    Handler(Looper.getMainLooper()).postDelayed({
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      context.startForegroundService(serviceIntent)
+      Log.d(TAG, "startForegroundService() called")
+    } else {
+      context.startService(serviceIntent)
+      Log.d(TAG, "startService() called")
+    }
 
-      Log.d(TAG, "Starting AlarmService alarmId=$alarmId")
-
-      val serviceIntent = Intent(context, AlarmService::class.java).apply {
-        putExtra("alarmId", alarmId)
-      }
-
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        context.startForegroundService(serviceIntent)
-      } else {
-        context.startService(serviceIntent)
-      }
-
-    }, 300)
+    Log.d(TAG, "Receiver finished successfully")
+    Log.d(TAG, "==============================")
   }
 }

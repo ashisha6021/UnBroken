@@ -4,20 +4,25 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 object AlarmScheduler {
+
+  private const val TAG = "UNBROKEN_ALARM_DATA"
+
 
   private fun buildPendingIntent(
     context: Context,
     alarmId: String,
     flags: Int
   ): PendingIntent? {
-    android.util.Log.d(
-      "AlarmScheduler",
-      "buildPendingIntent() alarmId=$alarmId flags=$flags"
-    )
+
+    Log.d(TAG, "buildPendingIntent() called")
+    Log.d(TAG, "alarmId=$alarmId flags=$flags")
+
     val intent = Intent(context, AlarmReceiver::class.java).apply {
       action = "com.unbrokenrna.ALARM_$alarmId"
+      putExtra("alarmId", alarmId)
     }
 
     return PendingIntent.getBroadcast(
@@ -33,10 +38,12 @@ object AlarmScheduler {
     alarmId: String,
     triggerAt: Long
   ) {
-    android.util.Log.d(
-      "AlarmScheduler",
-      "scheduleExact() alarmId=$alarmId triggerAt=${java.util.Date(triggerAt)}"
-    )
+
+    Log.d(TAG, "==============================")
+    Log.d(TAG, "scheduleExact() REQUEST RECEIVED")
+    Log.d(TAG, "alarmId=$alarmId")
+    Log.d(TAG, "triggerAt=${java.util.Date(triggerAt)}")
+
     val intent = Intent(context, AlarmReceiver::class.java).apply {
       action = "com.unbrokenrna.ALARM_$alarmId"
       putExtra("alarmId", alarmId)
@@ -52,16 +59,24 @@ object AlarmScheduler {
     val alarmManager =
       context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
+    Log.d(TAG, "Setting EXACT alarm now...")
+
     alarmManager.setExactAndAllowWhileIdle(
       AlarmManager.RTC_WAKEUP,
       triggerAt,
       pendingIntent
     )
+
+    Log.d(TAG, "Alarm scheduled SUCCESSFULLY alarmId=$alarmId")
+    Log.d(TAG, "==============================")
   }
 
   fun cancel(context: Context, alarmId: String) {
-    android.util.Log.d("AlarmScheduler", "cancel() alarmId=$alarmId")
-    val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    Log.d(TAG, "cancel() REQUEST RECEIVED alarmId=$alarmId")
+
+    val am =
+      context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     val pi = buildPendingIntent(
       context,
@@ -72,33 +87,47 @@ object AlarmScheduler {
     if (pi != null) {
       am.cancel(pi)
       pi.cancel()
+      Log.d(TAG, "Alarm cancelled SUCCESSFULLY alarmId=$alarmId")
+    } else {
+      Log.d(TAG, "No PendingIntent found → nothing cancelled")
     }
   }
 
   fun scheduleSnooze(
-  context: Context,
-  schedulerId: String,
-  originalAlarmId: String,
-  triggerAt: Long
-) {
-  android.util.Log.d(
-    "AlarmScheduler",
-    "scheduleSnooze() schedulerId=$schedulerId originalAlarmId=$originalAlarmId triggerAt=${java.util.Date(triggerAt)}"
-  )
-  val intent = Intent(context, AlarmReceiver::class.java).apply {
-    action = "com.unbrokenrna.ALARM_$schedulerId"
-    putExtra("alarmId", originalAlarmId) // 🔥 key
+    context: Context,
+    schedulerId: String,
+    originalAlarmId: String,
+    triggerAt: Long
+  ) {
+
+    Log.d(TAG, "==============================")
+    Log.d(TAG, "scheduleSnooze() REQUEST RECEIVED")
+    Log.d(TAG, "schedulerId=$schedulerId")
+    Log.d(TAG, "originalAlarmId=$originalAlarmId")
+    Log.d(TAG, "triggerAt=${java.util.Date(triggerAt)}")
+
+    val intent = Intent(context, AlarmReceiver::class.java).apply {
+      action = "com.unbrokenrna.ALARM_$schedulerId"
+      putExtra("alarmId", originalAlarmId)
+    }
+
+    val pi = PendingIntent.getBroadcast(
+      context,
+      schedulerId.hashCode(),
+      intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val am =
+      context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    am.setExactAndAllowWhileIdle(
+      AlarmManager.RTC_WAKEUP,
+      triggerAt,
+      pi
+    )
+
+    Log.d(TAG, "Snooze scheduled SUCCESSFULLY")
+    Log.d(TAG, "==============================")
   }
-
-  val pi = PendingIntent.getBroadcast(
-    context,
-    schedulerId.hashCode(),
-    intent,
-    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-  )
-
-  val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-  am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-}
-
 }

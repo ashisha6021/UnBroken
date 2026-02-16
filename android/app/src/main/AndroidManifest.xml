@@ -24,7 +24,9 @@
 
       <receiver
     android:name=".alarm.AlarmReceiver"
-    android:exported="false" />
+    android:exported="true"
+      android:permission="android.permission.WAKE_LOCK" 
+      android:enabled="true"/>
 
   <service
   android:name=".alarm.AlarmService"
@@ -47,7 +49,8 @@
   <activity
     android:name=".alarm.AlarmActivity"
     android:exported="true"
-    android:launchMode="singleTop"
+    android:launchMode="singleTask"
+    android:taskAffinity="com.unbrokenrna.alarm.TASK"
     android:excludeFromRecents="true"
     android:turnScreenOn="true"
     android:showWhenLocked="true"

@@ -1,76 +1,98 @@
 package com.unbrokenrna.alarm
 
 import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.unbrokenrna.MainActivity
 
 class AlarmService : Service() {
 
   companion object {
     const val CHANNEL_ID = "ALARM_CHANNEL"
     const val NOTIFICATION_ID = 1001
-    private const val TAG = "AlarmService"
+   private const val TAG = "UNBROKEN_ALARM_DATA"
+
   }
 
   override fun onCreate() {
     super.onCreate()
-    Log.d(TAG, "onCreate() AlarmService created")
+    Log.d(TAG, "AlarmService onCreate()")
   }
 
-  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+  override fun onTaskRemoved(rootIntent: Intent?) {
 
-    val alarmId = intent?.getStringExtra("alarmId")
+  Log.e(TAG, "🔥 USER CLEARED APP FROM RECENTS")
 
-    Log.d(
-      TAG,
-      "onStartCommand() startId=$startId flags=$flags alarmId=$alarmId intent=$intent"
-    )
+  Log.e(TAG, "Restarting alarm service immediately...")
 
-    // 🚨 If alarmId is missing, do NOT restart sound again
-    if (alarmId.isNullOrEmpty()) {
-      Log.w(TAG, "onStartCommand() Missing alarmId → ignoring start request")
-      return START_NOT_STICKY
-    }
+  val restartIntent = Intent(applicationContext, AlarmService::class.java)
 
-    // ✅ Ensure notification channel exists
-    ensureChannel()
+  val pendingIntent = PendingIntent.getService(
+    this,
+    9999,
+    restartIntent,
+    PendingIntent.FLAG_IMMUTABLE
+  )
 
-    // ✅ Start foreground notification immediately
-    Log.d(TAG, "Starting foreground notification for alarmId=$alarmId")
+  val alarmManager =
+    getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    startForeground(
-      NOTIFICATION_ID,
-      buildNotification(alarmId)
-    )
+  alarmManager.setExact(
+    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+    SystemClock.elapsedRealtime() + 1000,
+    pendingIntent
+  )
 
-    // ✅ Start alarm sound ALWAYS
-    Log.d(TAG, "Starting alarm sound for alarmId=$alarmId")
-    AlarmSoundPlayer.start(this, null, false)
+  super.onTaskRemoved(rootIntent)
+}
 
-    // ✅ Do NOT restart automatically if system kills it
-    return START_NOT_STICKY
+
+ override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+  Log.d(TAG, "==============================")
+  Log.d(TAG, "AlarmService onStartCommand() CALLED")
+
+  val alarmId = intent?.getStringExtra("alarmId")
+
+  if (alarmId.isNullOrEmpty()) {
+    Log.d(TAG, "Missing alarmId → exiting")
+    return return START_STICKY
   }
 
-  /* ============================================================
-     NOTIFICATION
-     - Ongoing (cannot swipe away)
-     - Tap opens AlarmActivity ONLY
-     - Does NOT stop alarm
-  ============================================================ */
+  ensureChannel()
+
+  startForeground(
+    NOTIFICATION_ID,
+    buildNotification(alarmId)
+  )
+
+  if (AlarmSoundPlayer.isPlaying()) {
+    Log.w(TAG, "Alarm already playing → no restart")
+    return return START_STICKY
+  }
+
+  Log.d(TAG, "Starting alarm sound now...")
+  AlarmSoundPlayer.start(this, null, false)
+
+  return return START_STICKY
+}
+
+
   private fun buildNotification(alarmId: String): Notification {
 
-    Log.d(TAG, "buildNotification() Creating notification for alarmId=$alarmId")
+    Log.d(TAG, "buildNotification() alarmId=$alarmId")
 
-    val openIntent = Intent(this, AlarmActivity::class.java).apply {
+    val openIntent = Intent(this, MainActivity::class.java).apply {
       putExtra("alarmId", alarmId)
 
-      // ✅ Correct flags (NO CLEAR_TOP loop)
       addFlags(
         Intent.FLAG_ACTIVITY_NEW_TASK or
-        Intent.FLAG_ACTIVITY_SINGLE_TOP
+          Intent.FLAG_ACTIVITY_SINGLE_TOP
       )
     }
 
@@ -81,71 +103,59 @@ class AlarmService : Service() {
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+   Log.d(TAG, "PendingIntent created for MainActivity")
+
+
     return NotificationCompat.Builder(this, CHANNEL_ID)
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setContentTitle("⏰ Alarm Ringing")
-      .setContentText("Tap to solve Brain Game and stop alarm")
+      .setContentText("Tap to open alarm screen")
       .setCategory(Notification.CATEGORY_ALARM)
-
-      // 🚨 Max priority + alarm visibility
       .setPriority(NotificationCompat.PRIORITY_MAX)
       .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-      // 🔒 User cannot dismiss
       .setOngoing(true)
       .setAutoCancel(false)
-
-      // ✅ Prevent re-alert spam
       .setOnlyAlertOnce(true)
 
-      // ✅ Tap should ONLY open UI
+      // ✅ Tap opens AlarmActivity ONLY
       .setContentIntent(pendingIntent)
-
-      // ❌ DO NOT USE fullscreen intent (causes double launch + crash)
-      // .setFullScreenIntent(pendingIntent, true)
 
       .build()
   }
 
-  /* ============================================================
-     CLEANUP
-  ============================================================ */
   override fun onDestroy() {
-    Log.d(TAG, "onDestroy() AlarmService destroyed → stopping sound")
-
-    // Stop sound safely
+    Log.d(TAG, "AlarmService onDestroy() → stopping sound")
     AlarmSoundPlayer.stop()
-
     super.onDestroy()
   }
 
   override fun onBind(intent: Intent?): IBinder? = null
 
-  /* ============================================================
-     NOTIFICATION CHANNEL
-  ============================================================ */
   private fun ensureChannel() {
+
+    Log.d(TAG, "ensureChannel() called")
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
       val nm = getSystemService(NotificationManager::class.java)
 
       if (nm.getNotificationChannel(CHANNEL_ID) == null) {
 
-        Log.d(TAG, "ensureChannel() Creating Alarm notification channel")
+        Log.d(TAG, "Creating Notification Channel...")
 
         val channel = NotificationChannel(
           CHANNEL_ID,
           "Alarms",
           NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-          description = "Alarm notifications"
-          lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-        }
+        )
 
         nm.createNotificationChannel(channel)
 
+        Log.d(TAG, "Notification Channel created successfully")
+
       } else {
-        Log.d(TAG, "ensureChannel() Alarm channel already exists")
+        Log.d(TAG, "Notification Channel already exists")
       }
     }
   }

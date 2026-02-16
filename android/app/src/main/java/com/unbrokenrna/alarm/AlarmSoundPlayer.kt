@@ -12,7 +12,8 @@ object AlarmSoundPlayer {
 
   private var player: MediaPlayer? = null
 
-  private const val TAG = "AlarmSoundPlayer"
+  private const val TAG = "UNBROKEN_ALARM_DATA"
+
 
   /* ----------------------------------
      START ALARM SOUND
@@ -22,28 +23,48 @@ object AlarmSoundPlayer {
     ringtoneUri: String?,
     isCritical: Boolean
   ) {
-    stop() // always reset safely
+
+    Log.d(TAG, "==============================")
+    Log.d(TAG, "AlarmSoundPlayer.start() CALLED")
+    Log.d(TAG, "ringtoneUri=$ringtoneUri isCritical=$isCritical")
+
+    // Always reset safely
+    stop()
 
     try {
+
+      // ✅ Select ringtone
       val uri: Uri = if (!ringtoneUri.isNullOrEmpty()) {
+        Log.d(TAG, "Custom ringtone selected: $ringtoneUri")
         Uri.parse(ringtoneUri)
       } else {
-        // ✅ SYSTEM DEFAULT ALARM TONE
+        Log.d(TAG, "Using SYSTEM DEFAULT ALARM ringtone")
         RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
       }
 
+      Log.d(TAG, "Ringtone URI resolved = $uri")
+
+      // ✅ Audio manager
       val audioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-      // 🔊 FORCE ALARM STREAM VOLUME
+      // 🔊 Force alarm stream volume
       val maxVolume =
         audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+
+      Log.d(TAG, "Max Alarm Volume = $maxVolume")
+      Log.d(TAG, "Forcing alarm volume to MAX...")
 
       audioManager.setStreamVolume(
         AudioManager.STREAM_ALARM,
         maxVolume,
         AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE
       )
+
+      Log.d(TAG, "Volume forced successfully")
+
+      // ✅ MediaPlayer init
+      Log.d(TAG, "Creating MediaPlayer instance...")
 
       player = MediaPlayer().apply {
 
@@ -54,54 +75,85 @@ object AlarmSoundPlayer {
             .build()
         )
 
+        Log.d(TAG, "AudioAttributes set successfully")
+
         setDataSource(context, uri)
 
+        Log.d(TAG, "MediaPlayer datasource set")
+
         isLooping = true
+        Log.d(TAG, "Looping enabled")
 
         setOnPreparedListener {
-          Log.d(TAG, "🔔 Alarm sound started")
+          Log.d(TAG, "MediaPlayer prepared → STARTING SOUND NOW 🔔")
           start()
         }
 
         setOnErrorListener { _, what, extra ->
-          Log.e(
-            TAG,
-            "❌ MediaPlayer error what=$what extra=$extra"
-          )
+          Log.e(TAG, "❌ MediaPlayer ERROR what=$what extra=$extra")
           stop()
           true
         }
 
+        Log.d(TAG, "Calling prepareAsync()...")
         prepareAsync()
       }
 
+      Log.d(TAG, "MediaPlayer preparation started")
+
     } catch (e: Exception) {
-      Log.e(TAG, "❌ Failed to start alarm sound", e)
+
+      Log.e(TAG, "❌ FAILED to start alarm sound", e)
       stop()
     }
+
+    Log.d(TAG, "==============================")
   }
 
   /* ----------------------------------
      STOP ALARM SOUND
   ---------------------------------- */
   fun stop() {
+
+    Log.d(TAG, "AlarmSoundPlayer.stop() CALLED")
+
     try {
       player?.let {
-        if (it.isPlaying) it.stop()
+
+        Log.d(TAG, "Stopping MediaPlayer...")
+
+        if (it.isPlaying) {
+          Log.d(TAG, "MediaPlayer is playing → stopping now")
+          it.stop()
+        } else {
+          Log.d(TAG, "MediaPlayer not playing")
+        }
+
         it.reset()
         it.release()
+
+        Log.d(TAG, "MediaPlayer released successfully")
       }
+
     } catch (e: Exception) {
-      Log.e(TAG, "❌ Error stopping alarm sound", e)
+
+      Log.e(TAG, "❌ ERROR while stopping alarm sound", e)
+
     } finally {
+
       player = null
+      Log.d(TAG, "Player set to NULL")
     }
   }
 
   /* ----------------------------------
-     CHECK IF SOUND IS PLAYING ✅ (NEW)
+     CHECK IF SOUND IS PLAYING
   ---------------------------------- */
   fun isPlaying(): Boolean {
-    return player?.isPlaying == true
+
+    val playing = player?.isPlaying == true
+    Log.d(TAG, "AlarmSoundPlayer.isPlaying() = $playing")
+
+    return playing
   }
 }
