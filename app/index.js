@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { getRandomQuote } from '../utils/quotes';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../constants/theme';
-import { scheduleDebugAlarm } from '../alarm1/alarmScheduler123';
 import ScreenWrapper from '../components/ScreenWrapper';
-
+import { getDisplayName } from "../utils/name";
 
 export default function HomeScreen({ navigation }) {
 
@@ -48,7 +47,7 @@ export default function HomeScreen({ navigation }) {
     );
   }
 
-  const userName = user?.name || 'Champ';
+  const userName = getDisplayName(user?.name);
   const hasCompletedSetup = user?.hasCompletedSetup === true;
 
   return (

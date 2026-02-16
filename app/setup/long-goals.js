@@ -15,7 +15,7 @@ import { addLongGoal, updateLongGoal } from '../../storage/storage-sqlite';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { formatDateDisplay } from '../../utils/dateHelpers';
 import DeadlinePicker from '../../utils/DeadlinePicker123';
-
+import { usePremiumAlert } from '../../store/usePremiumAlert';
 export default function LongGoalsScreen({ navigation, route }) {
   const {
     longGoals,
@@ -39,7 +39,7 @@ const toggleGoalExpand = (id) => {
 
   const editingGoalId = route?.params?.editingGoalId ?? null;
   const isEditing = Boolean(activeEditId);
-
+  const showAlert = usePremiumAlert((state) => state.showAlert);
   const clearRouteEdit = () => {
     navigation.setParams({ editingGoalId: undefined });
   };
@@ -68,12 +68,14 @@ const toggleGoalExpand = (id) => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a goal title');
+   
+      showAlert('Task Required', 'Please enter a goal title.',"Ok","error");
       return;
     }
 
     if (!deadline) {
-      Alert.alert('Error', 'Please select a deadline');
+      
+      showAlert('Task Required', 'Please select a deadline.',"Ok","error");
       return;
     }
 
@@ -341,7 +343,7 @@ const styles = StyleSheet.create({
   ============================ */
 
   goalsList: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
   },
 
   sectionTitle: {

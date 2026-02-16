@@ -1,161 +1,221 @@
 package com.unbrokenrna.alarm
 
-import android.content.Intent
+import android.app.Activity
+import android.app.KeyguardManager
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import android.util.Log
+import android.view.WindowManager
+import android.widget.Button
+import android.widget.TextView
+import com.unbrokenrna.R
+import android.content.Intent
+import com.unbrokenrna.MainActivity
+import android.view.View
 
-import com.facebook.react.ReactActivity
-import com.facebook.react.bridge.Arguments
-import com.facebook.react.modules.core.DeviceEventManagerModule
-
-class AlarmActivity : ReactActivity() {
+class AlarmActivity : Activity() {
 
   companion object {
-    private const val TAG = "UNBROKEN_ALARM_DATA"
-
-    // ✅ Needed for finishAlarmTask()
     var instance: AlarmActivity? = null
   }
 
-  override fun getMainComponentName(): String = "UnBrokenRNA"
-
   override fun onCreate(savedInstanceState: Bundle?) {
-
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmActivity.onCreate() CALLED")
-    Log.d(TAG, "intent = $intent")
-    Log.d(TAG, "extras = ${intent.extras}")
-    Log.d(TAG, "==============================")
-
     super.onCreate(savedInstanceState)
 
-    // ✅ Store instance reference
     instance = this
-    Log.d(TAG, "AlarmActivity instance SET")
+    
+    Log.d("UNBROKEN_ALARM_DATA", "======================================")
+    Log.d("UNBROKEN_ALARM_DATA", "🔥 AlarmActivity.onCreate() CALLED")
+    Log.d("UNBROKEN_ALARM_DATA", "intent=$intent")
+    Log.d("UNBROKEN_ALARM_DATA", "extras=${intent.extras}")
+    Log.d("UNBROKEN_ALARM_DATA", "======================================")
 
-    // ✅ Show over lock screen
-    setShowWhenLocked(true)
-    setTurnScreenOn(true)
+    /* ============================================================
+       ✅ LOCKSCREEN DISPLAY FIX (MODERN + OLD)
+    ============================================================ */
 
-    Log.d(TAG, "Lockscreen flags applied")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
 
-    // ✅ Keep screen awake + dismiss keyguard
-    window.addFlags(
-      WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-    )
+      Log.d("UNBROKEN_ALARM_DATA", "✅ Using modern lockscreen API")
 
-    Log.d(TAG, "Window flags added successfully")
+      setShowWhenLocked(true)
+      setTurnScreenOn(true)
 
-    // ✅ Handle incoming alarm intent
-    handleAlarmIntent(intent)
-  }
+      val keyguard =
+        getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 
-  override fun onNewIntent(intent: Intent?) {
-
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmActivity.onNewIntent() CALLED")
-    Log.d(TAG, "newIntent = $intent")
-    Log.d(TAG, "extras = ${intent?.extras}")
-    Log.d(TAG, "==============================")
-
-    super.onNewIntent(intent)
-
-    setIntent(intent)
-
-    handleAlarmIntent(intent)
-  }
-
-  override fun onDestroy() {
-
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmActivity.onDestroy() CALLED")
-    Log.d(TAG, "Clearing instance reference")
-    Log.d(TAG, "==============================")
-
-    instance = null
-
-    super.onDestroy()
-  }
-
-  /* ============================================================
-     HANDLE ALARM INTENT
-     - Extract alarmId
-     - Emit ALARM_LAUNCHED event to JS
-  ============================================================ */
-  private fun handleAlarmIntent(intent: Intent?) {
-
-    Log.d(TAG, "------------------------------")
-    Log.d(TAG, "handleAlarmIntent() CALLED")
-    Log.d(TAG, "intent = $intent")
-    Log.d(TAG, "------------------------------")
-
-    val alarmId = intent?.getStringExtra("alarmId")
-
-    if (alarmId.isNullOrEmpty()) {
-      Log.e(TAG, "❌ ERROR: alarmId missing in AlarmActivity intent!")
-      return
-    }
-
-    Log.d(TAG, "alarmId extracted successfully = $alarmId")
-
-    val params = Arguments.createMap().apply {
-      putString("alarmId", alarmId)
-    }
-
-    val reactContext = reactInstanceManager.currentReactContext
-
-    if (reactContext != null) {
-
-      // ✅ React already running → emit immediately
-      Log.d(TAG, "React context READY → emitting ALARM_LAUNCHED now")
-
-      reactContext
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-        .emit("ALARM_LAUNCHED", params)
-
-      Log.d(TAG, "ALARM_LAUNCHED emitted successfully")
+      keyguard.requestDismissKeyguard(this, null)
 
     } else {
 
-      // 🔒 React not ready → wait ONE TIME
-      Log.w(TAG, "React context NOT READY → buffering event until initialized")
+      Log.d("UNBROKEN_ALARM_DATA", "✅ Using legacy window flags")
 
-      val listener =
-        object :
-          com.facebook.react.ReactInstanceManager.ReactInstanceEventListener {
+      window.addFlags(
+        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+          WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+          WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+          WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+      )
+    }
 
-          override fun onReactContextInitialized(
-            context: com.facebook.react.bridge.ReactContext
-          ) {
+    /* ============================================================
+       ✅ LOAD UI
+    ============================================================ */
+     
+   if (!AlarmSoundPlayer.isRinging()) {
+  finish()
+  return
+}
 
-            Log.d(TAG, "React context initialized → emitting ALARM_LAUNCHED now")
+    setContentView(R.layout.activity_alarm)
 
-            context
-              .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-              .emit("ALARM_LAUNCHED", params)
+    val alarmId = intent.getStringExtra("alarmId")
+    val isCritical = intent.getBooleanExtra("isCritical", false)
 
-            Log.d(TAG, "ALARM_LAUNCHED emitted AFTER init successfully")
+    Log.d("UNBROKEN_ALARM_DATA", "alarmId=$alarmId")
+    Log.d("UNBROKEN_ALARM_DATA", "isCritical=$isCritical")
 
-            // ✅ Remove listener after first trigger
-            reactInstanceManager.removeReactInstanceEventListener(this)
+    val title = findViewById<TextView>(R.id.alarmTitle)
+    val stopBtn = findViewById<Button>(R.id.stopButton)
+    val snoozeBtn = findViewById<Button>(R.id.snoozeButton)
 
-            Log.d(TAG, "Listener removed successfully")
-          }
+    val timeText = findViewById<TextView>(R.id.alarmTime)
+    val formatter =java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+  timeText.text = formatter.format(java.util.Date())
+
+    /* ============================================================
+       ⚠ CRITICAL ALARM CASE
+    ============================================================ */
+   if (isCritical) {
+     snoozeBtn.visibility = View.GONE 
+
+  Log.w("UNBROKEN_ALARM_DATA", "⚠ Critical alarm → Unlock required")
+  stopBtn.setBackgroundResource(R.drawable.alarm_button_critical)
+
+  title.text = "🧠 Critical Alarm\nUnlock phone to continue"
+
+  stopBtn.text = "UNLOCK REQUIRED"
+  stopBtn.isEnabled = true
+
+  stopBtn.setOnClickListener {
+
+    Log.d("UNBROKEN_ALARM_DATA", "🔓 Unlock button pressed")
+
+    val keyguard =
+      getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+
+    keyguard.requestDismissKeyguard(this,
+      object : KeyguardManager.KeyguardDismissCallback() {
+
+        override fun onDismissSucceeded() {
+          super.onDismissSucceeded()
+
+          Log.d("UNBROKEN_ALARM_DATA", "✅ Phone unlocked → Launching Brain Game")
+
+          val gameIntent =
+            Intent(this@AlarmActivity, MainActivity::class.java).apply {
+
+              putExtra("alarmId", alarmId)
+              putExtra("isCritical", true)
+
+              addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                  Intent.FLAG_ACTIVITY_CLEAR_TOP
+              )
+            }
+
+          startActivity(gameIntent)
+
+          // Close lockscreen alarm screen
+          finish()
         }
 
-      reactInstanceManager.addReactInstanceEventListener(listener)
+        override fun onDismissCancelled() {
+          Log.w("UNBROKEN_ALARM_DATA", "❌ Unlock cancelled by user")
+        }
 
-      Log.d(TAG, "ReactInstanceEventListener registered")
+        override fun onDismissError() {
+          Log.e("UNBROKEN_ALARM_DATA", "❌ Unlock error")
+        }
+      })
 
-      // ✅ Force React init if needed
-      if (!reactInstanceManager.hasStartedCreatingInitialContext()) {
+  }
 
-        Log.d(TAG, "React context not started → creating in background now")
+  return
+}
+    snoozeBtn.setOnClickListener {
 
-        reactInstanceManager.createReactContextInBackground()
+  Log.d("UNBROKEN_ALARM_DATA", "😴 Snooze pressed")
+
+  if (alarmId == null) return@setOnClickListener
+
+  // Stop sound
+  AlarmSoundPlayer.stop()
+
+  // Cancel current alarm
+  AlarmScheduler.cancel(this, alarmId)
+
+  // Snooze for 5 minutes
+  val snoozeTime = System.currentTimeMillis() + (5 * 60 * 1000)
+
+  AlarmScheduler.scheduleSnooze(
+    this,
+    schedulerId = alarmId + "_snooze",
+    originalAlarmId = alarmId,
+    triggerAt = snoozeTime,
+    isCritical = false
+  )
+
+  Log.d("UNBROKEN_ALARM_DATA", "✅ Snoozed 5 minutes")
+
+  // Stop service + close UI
+  stopService(Intent(this, AlarmService::class.java))
+  finish()
+}
+
+
+    /* ============================================================
+       ✅ NON-CRITICAL STOP BUTTON
+    ============================================================ */
+    stopBtn.setOnClickListener {
+
+      Log.d("UNBROKEN_ALARM_DATA", "======================================")
+      Log.d("UNBROKEN_ALARM_DATA", "🛑 STOP BUTTON PRESSED")
+      Log.d("UNBROKEN_ALARM_DATA", "alarmId=$alarmId")
+      Log.d("UNBROKEN_ALARM_DATA", "======================================")
+
+      if (alarmId == null) {
+        Log.e("UNBROKEN_ALARM_DATA", "❌ alarmId missing → cannot stop")
+        return@setOnClickListener
       }
+
+      // ✅ Stop sound
+      AlarmSoundPlayer.stop()
+      Log.d("UNBROKEN_ALARM_DATA", "✅ Sound stopped")
+
+      // ✅ Cancel current alarm
+      AlarmScheduler.cancel(this, alarmId)
+      Log.d("UNBROKEN_ALARM_DATA", "✅ Alarm cancelled")
+       // Cancel snooze if exists
+       AlarmScheduler.cancel(this, alarmId + "_snooze")
+
+
+      // ✅ Reschedule next week
+      AlarmScheduler.scheduleNextWeek(this, alarmId, false)
+      Log.d("UNBROKEN_ALARM_DATA", "✅ Alarm rescheduled")
+
+      // ✅ Close activity + task
+       val stopServiceIntent = Intent(this, AlarmService::class.java)
+        stopService(stopServiceIntent)
+      finish()
+     
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    instance = null
+    Log.d("UNBROKEN_ALARM_DATA", "AlarmActivity destroyed")
   }
 }

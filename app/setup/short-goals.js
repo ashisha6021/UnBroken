@@ -13,6 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { addShortGoal, updateShortGoal } from '../../storage/storage-sqlite';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import DeadlinePicker from '../../utils/DeadlinePicker123';
+import { usePremiumAlert } from "../../store/usePremiumAlert";
 
 export default function ShortGoalsScreen({ navigation, route }) {
   const editingGoalId = route?.params?.editingGoalId ?? null;
@@ -37,7 +38,7 @@ export default function ShortGoalsScreen({ navigation, route }) {
   const [deadline, setDeadline] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [expandedGoalId, setExpandedGoalId] = useState(null);
-
+  const showAlert = usePremiumAlert((state) => state.showAlert);
   const editingGoal = isEditing
     ? shortGoals.find(g => g.id === editingGoalId)
     : null;
@@ -103,27 +104,28 @@ const longGoalDeadline = activeLongGoal?.deadline
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a goal title');
+      
+      showAlert("Task Required", "Please enter a goal title.","Ok","error");
       return;
     }
 
     if (!longGoalId) {
-      Alert.alert('Error', 'Please select a long-term goal');
+      
+      showAlert("Task Required", "Please select a long-term goal.","Ok","error");
       return;
     }
 
     if (!deadline) {
-      Alert.alert('Error', 'Please select a deadline');
+      
+      showAlert("Task Required", "Please select a deadline.","Ok","error");
+
       return;
     }
     if (
         longGoalDeadline &&
         new Date(deadline) > longGoalDeadline
       ) {
-        Alert.alert(
-          'Invalid deadline',
-          'Short-term goal deadline cannot exceed the long-term goal deadline.'
-        );
+        showAlert('Invalid deadline', 'Short-term goal deadline cannot exceed the long-term goal deadline.',"Ok","error");
         return;
       }
     try {
@@ -159,7 +161,8 @@ const longGoalDeadline = activeLongGoal?.deadline
         });
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to save short-term goal');
+     
+      showAlert('Error', 'Failed to save short-term goal.',"Ok","error");
     }
   };
 
@@ -526,7 +529,7 @@ const styles = StyleSheet.create({
 
   form: {
     marginTop: SPACING.md,
-    marginBottom: SPACING.xxl,
+    marginBottom: SPACING.lg,
   },
 
   input: {
@@ -670,6 +673,7 @@ const styles = StyleSheet.create({
   },
 
   editButton: {
+    marginLeft:SPACING.sm,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: BORDER_RADIUS.full,
@@ -801,5 +805,6 @@ dropdownButtonText: {
     fontWeight: "700",
     color: COLORS.textPrimary,
   },
+
 });
 

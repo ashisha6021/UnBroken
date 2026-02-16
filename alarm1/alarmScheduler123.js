@@ -2,15 +2,18 @@ import { NativeModules, Platform } from 'react-native';
 
 const { AlarmModule } = NativeModules;
 
+/* ============================================================
+   ✅ MODULE CHECK
+============================================================ */
 if (!AlarmModule && Platform.OS === 'android') {
   console.error(
     '❌ AlarmModule not linked. Did you rebuild the app after adding native code?'
   );
 }
 
-/* --------------------------------------------------
-   HELPERS
--------------------------------------------------- */
+/* ============================================================
+   ✅ HELPERS
+============================================================ */
 
 const DAY_TO_INDEX = {
   sunday: 0,
@@ -22,6 +25,9 @@ const DAY_TO_INDEX = {
   saturday: 6,
 };
 
+/* --------------------------------------------------
+   GET NEXT TRIGGER TIME
+-------------------------------------------------- */
 function getNextTriggerMillis(dayOfWeek, time) {
   const [hour, minute] = time.split(':').map(Number);
 
@@ -37,21 +43,37 @@ function getNextTriggerMillis(dayOfWeek, time) {
   if (diff === 0 && target <= now) diff = 7;
 
   target.setDate(target.getDate() + diff);
+
+  console.log('======================================');
+  console.log('[alarmScheduler] getNextTriggerMillis()');
+  console.log('dayOfWeek=', dayOfWeek);
+  console.log('time=', time);
+  console.log('nextTrigger=', target.toString());
+  console.log('======================================');
+
   return target.getTime();
 }
 
-/* --------------------------------------------------
-   SCHEDULE SINGLE ALARM (NATIVE)
--------------------------------------------------- */
+/* ============================================================
+   1️⃣ SCHEDULE SINGLE ALARM (NATIVE)
+============================================================ */
 export async function scheduleAlarm({
   alarmId,
-  taskId,          // kept for compatibility (DB usage)
-  dayOfWeek,       // number OR string
-  time,            // "HH:mm"
+  taskId,
+  dayOfWeek,
+  time,
   isCritical,
-  ringtoneUri = null, // null → system default
 }) {
   if (Platform.OS !== 'android') return;
+
+  console.log('======================================');
+  console.log('⏰ [alarmScheduler] scheduleAlarm() CALLED');
+  console.log('alarmId=', alarmId);
+  console.log('taskId=', taskId);
+  console.log('dayOfWeek=', dayOfWeek);
+  console.log('time=', time);
+  console.log('isCritical=', isCritical);
+  console.log('======================================');
 
   const dayIndex =
     typeof dayOfWeek === 'string'
@@ -59,93 +81,155 @@ export async function scheduleAlarm({
       : dayOfWeek;
 
   if (typeof dayIndex !== 'number') {
-    console.error('[alarmScheduler] Invalid dayOfWeek:', dayOfWeek);
+    console.error('❌ Invalid dayOfWeek:', dayOfWeek);
     return;
   }
 
   const triggerAt = getNextTriggerMillis(dayIndex, time);
 
-  console.log('[alarmScheduler] scheduleAlarm()', {
-    alarmId,
-    taskId,
-    dayOfWeek,
-    resolvedDayIndex: dayIndex,
-    time,
-    isCritical,
-    triggerAt: new Date(triggerAt).toString(),
-  });
-  
+  console.log('✅ Calling Native AlarmModule.schedule()');
+  console.log('triggerAt=', new Date(triggerAt).toString());
 
+  try {
+    await AlarmModule.schedule(alarmId, triggerAt, isCritical);
 
-  AlarmModule.schedule(
-    alarmId,
-    triggerAt
-  );
+    console.log('✅ Alarm scheduled SUCCESSFULLY');
+  } catch (e) {
+    console.error('❌ Alarm schedule FAILED', e);
+  }
+
+  console.log('======================================');
 }
 
-/* --------------------------------------------------
-   CANCEL SINGLE ALARM (FOREVER)
--------------------------------------------------- */
+/* ============================================================
+   2️⃣ CANCEL SINGLE ALARM (FOREVER)
+   ❌ NO isCritical REQUIRED
+============================================================ */
 export async function cancelAlarm(alarmId) {
   if (Platform.OS !== 'android') return;
 
+  console.log('======================================');
+  console.log('🛑 [alarmScheduler] cancelAlarm() CALLED');
+  console.log('alarmId=', alarmId);
+  console.log('======================================');
+
   try {
-    console.log('[alarmScheduler] cancelAlarm()', { alarmId });
     await AlarmModule.cancelScheduledAlarm(alarmId);
+
+    console.log('✅ Alarm cancelled successfully');
   } catch (e) {
-    console.warn('[alarmScheduler] Cancel alarm failed safely', e);
+    console.warn('❌ Cancel alarm failed safely', e);
+  }
+
+  console.log('======================================');
+}
+
+/* ============================================================
+   3️⃣ CHECK IF ALARM EXISTS (OS LEVEL)
+   ❌ NO isCritical REQUIRED
+============================================================ */
+export async function isAlarmScheduled1(alarmId) {
+  if (Platform.OS !== 'android') return false;
+
+  console.log('======================================');
+  console.log('🔍 [alarmScheduler] isAlarmScheduled() CHECK');
+  console.log('alarmId=', alarmId);
+  console.log('======================================');
+
+  try {
+    const exists = await AlarmModule.isAlarmScheduled(alarmId);
+
+    console.log('✅ Alarm exists?', exists);
+    return exists;
+  } catch (e) {
+    console.warn('❌ Alarm check failed', e);
+    return false;
   }
 }
 
+/* ============================================================
+   4️⃣ STOP CURRENT RINGING
+============================================================ */
+export async function stopRinging() {
+  if (Platform.OS !== 'android') return;
 
-/* --------------------------------------------------
-   CHECK IF ALARM EXISTS (REAL OS CHECK)
--------------------------------------------------- */
-export async function isAlarmScheduled1(alarmId) {
-  if (Platform.OS !== 'android') return false;
-  console.log('[alarmScheduler] isAlarmScheduled1() check for', alarmId);
-  return AlarmModule.isAlarmScheduled(alarmId);
+  console.log('======================================');
+  console.log('🔇 [alarmScheduler] stopRinging() CALLED');
+  console.log('======================================');
+
+  try {
+    await AlarmModule.stopRinging();
+    console.log('✅ Alarm sound stopped');
+  } catch (e) {
+    console.warn('❌ stopRinging failed safely', e);
+  }
+
+  console.log('======================================');
 }
 
-/* --------------------------------------------------
-   STOP CURRENT RING + RESCHEDULE NEXT WEEK
--------------------------------------------------- */
-export async function rescheduleNextAlarm1({
+/* ============================================================
+   5️⃣ SNOOZE ALARM (UPDATED)
+   ✅ NEEDS isCritical
+============================================================ */
+export async function snoozeAlarm({
   alarmId,
-  dayOfWeek,
-  time,
+  snoozeMinutes,
   isCritical,
-  ringtoneUri = null,
 }) {
   if (Platform.OS !== 'android') return;
 
-  const dayIndex =
-    typeof dayOfWeek === 'string'
-      ? DAY_TO_INDEX[dayOfWeek.toLowerCase()]
-      : dayOfWeek;
+  const snoozeAlarmId = `${alarmId}_SNOOZE`;
 
-  const [hour, minute] = time.split(':').map(Number);
+  const minutes =
+    typeof snoozeMinutes === 'number' && snoozeMinutes > 0
+      ? snoozeMinutes
+      : 5;
 
-  console.log('🔁 Rescheduling alarm for next week');
+  console.log('======================================');
+  console.log('😴 [alarmScheduler] snoozeAlarm() CALLED');
+  console.log('alarmId=', alarmId);
+  console.log('snoozeMinutes=', minutes);
+  console.log('isCritical=', isCritical);
+  console.log('snoozeAlarmId=', snoozeAlarmId);
+  console.log('======================================');
 
-  AlarmModule.stopAndReschedule(
-    alarmId,
-    dayIndex,
-    hour,
-    minute,
-    isCritical,
-    ringtoneUri
-  );
+  try {
+    console.log('➡ Cancelling old snooze if exists...');
+    await AlarmModule.cancelScheduledAlarm(snoozeAlarmId);
+
+    const triggerAt = Date.now() + minutes * 60 * 1000;
+
+    console.log('➡ Scheduling snooze triggerAt=', new Date(triggerAt));
+
+    await AlarmModule.scheduleSnooze(
+      snoozeAlarmId,
+      alarmId,
+      triggerAt,
+      isCritical
+    );
+
+    console.log('➡ Stopping current ringing...');
+    await AlarmModule.stopRinging();
+
+    console.log('✅ Snooze scheduled SUCCESSFULLY');
+
+  } catch (e) {
+    console.warn('❌ Snooze failed safely', e);
+  }
+
+  console.log('======================================');
 }
 
-/* --------------------------------------------------
-   SCHEDULE ALL ALARMS FOR A TASK
--------------------------------------------------- */
-export async function scheduleAlarmsForTask(
-  taskId,
-  alarms,
-  alarmSettings
-) {
+/* ============================================================
+   6️⃣ SCHEDULE ALL ALARMS FOR TASK
+============================================================ */
+export async function scheduleAlarmsForTask(taskId, alarms) {
+  console.log('======================================');
+  console.log('📌 scheduleAlarmsForTask() CALLED');
+  console.log('taskId=', taskId);
+  console.log('alarmsCount=', alarms.length);
+  console.log('======================================');
+
   for (const alarm of alarms) {
     if (!alarm.enabled || !alarm.time) continue;
 
@@ -155,77 +239,42 @@ export async function scheduleAlarmsForTask(
       dayOfWeek: alarm.dayOfWeek,
       time: alarm.time,
       isCritical: alarm.isCritical,
-      ringtoneUri: alarmSettings?.ringtoneUri ?? null,
     });
   }
 }
 
-/* --------------------------------------------------
-   CANCEL ALL ALARMS FOR A TASK
-   (USE DB → call cancelAlarm per id)
--------------------------------------------------- */
+/* ============================================================
+   7️⃣ CANCEL ALL ALARMS FOR TASK
+============================================================ */
 export async function cancelAlarmsForTask(taskId, alarms) {
+  console.log('======================================');
+  console.log('🛑 cancelAlarmsForTask() CALLED');
+  console.log('taskId=', taskId);
+  console.log('alarmsCount=', alarms.length);
+  console.log('======================================');
+
   for (const alarm of alarms) {
     await cancelAlarm(alarm.id);
   }
 }
 
-
-export async function stopRinging() {
-  if (Platform.OS !== 'android') return;
-  console.log('[alarmScheduler] stopRinging() called');
-  await AlarmModule.stopRinging();
-}
-
-
-export async function snoozeAlarm({
-  alarmId,
-  snoozeMinutes,
-}) {
-  if (Platform.OS !== 'android') return;
-
-  const snoozeAlarmId = `${alarmId}_SNOOZE`;
-
-  // ✅ Default to 5 minutes if not provided or invalid
-  const minutes =
-    typeof snoozeMinutes === 'number' && snoozeMinutes > 0
-      ? snoozeMinutes
-      : 5;
-
-  try {
-    console.log('[alarmScheduler] snoozeAlarm()', {
-      alarmId,
-      snoozeMinutes,
-      minutes,
-      snoozeAlarmId,
-    });
-    
-    await AlarmModule.cancelScheduledAlarm(snoozeAlarmId);
-    const triggerAt = Date.now() + minutes * 60 * 1000;
-
-    await AlarmModule.scheduleSnooze(snoozeAlarmId,alarmId,triggerAt);
-   await AlarmModule.stopRinging();
-    console.log(
-      '⏰ Snooze scheduled at',
-      new Date(triggerAt).toLocaleTimeString()
-    );
-  } catch (e) {
-    console.warn('❌ Snooze failed safely', e);
-  }
-}
-
-
+/* ============================================================
+   8️⃣ DEBUG ALARM (10 SECONDS TEST)
+============================================================ */
 export async function scheduleDebugAlarm() {
   if (Platform.OS !== 'android') return;
 
-  const triggerAt = Date.now() + 10_000; // 10 seconds
+  const triggerAt = Date.now() + 10_000;
 
-  console.log('🧪 Scheduling debug alarm in 10 seconds');
-  console.log(AlarmModule)
-  // AlarmModule.schedule(
-  //   'debug-alarm',
-  //   triggerAt,
-  //   true,
-  //   null
-  // );
+  console.log('======================================');
+  console.log('🧪 scheduleDebugAlarm() CALLED');
+  console.log('Trigger in 10 seconds...');
+  console.log('triggerAt=', new Date(triggerAt).toString());
+  console.log('======================================');
+
+  await AlarmModule.schedule(
+    'debug-alarm',
+    triggerAt,
+    false
+  );
 }

@@ -124,7 +124,22 @@ export const useAppStore = create((set, get) => ({
   // USER
   // --------------------
   setUser: (user) => set({ user }),
+  /* ✅ Update user name + persist */
+updateUserName: async (newName) => {
+  const currentUser = get().user;
+  if (!currentUser) return;
 
+  const updatedUser = {
+    ...currentUser,
+    name: newName,
+  };
+
+  // Save to SQLite
+  await saveUser(updatedUser);
+
+  // Update Zustand state
+  set({ user: updatedUser });
+},
   // --------------------
   // LONG GOALS
   // --------------------

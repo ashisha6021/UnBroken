@@ -11,26 +11,37 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { getRealm } from '../../storage/database';
 
 import {
-  cancelAlarm,scheduleAlarm,stopRinging, snoozeAlarm
-
+  cancelAlarm,
+  scheduleAlarm,
+  stopRinging,
+  snoozeAlarm,
 } from '../../alarm1/alarmScheduler123';
+
 import { exitAlarmSafely } from '../../utils/exitAppSafely';
-
-
 
 export default function AlarmRingingScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const actionLockedRef = useRef(false);
 
-  // -----------------------------
-  // SAFE PARAM / REALM LOOKUP
-  // -----------------------------
+  /* ============================================================
+     1️⃣ GET alarmId FROM ROUTE
+  ============================================================ */
   const alarmId = route.params?.alarmId;
-  console.log('[AlarmRingingScreen] mounted with route params:', route.params);
 
+  console.log('\n======================================');
+  console.log('🔥 AlarmRingingScreen MOUNTED');
+  console.log('route.params =', route.params);
+  console.log('alarmId =', alarmId);
+  console.log('======================================\n');
+
+  /* ============================================================
+     2️⃣ LOAD FULL ALARM DATA FROM REALM
+     (DB is source of truth)
+  ============================================================ */
   let alarm = null;
   let alarmSettings = null;
+
   let taskId;
   let dayOfWeek;
   let time;
@@ -43,144 +54,182 @@ export default function AlarmRingingScreen() {
       alarm = realm.objectForPrimaryKey('task_alarms', alarmId);
 
       if (alarm) {
-        const {
-          taskId: tId,
-          dayOfWeek: d,
-          time: t,
-          isCritical: crit,
-        } = alarm;
+        taskId = alarm.taskId;
+        dayOfWeek = alarm.dayOfWeek;
+        time = alarm.time;
+        isCritical = alarm.isCritical;
 
-        taskId = tId;
-        dayOfWeek = d;
-        time = t;
-        isCritical = crit;
+        console.log('✅ Alarm Loaded From Realm:', {
+          taskId,
+          dayOfWeek,
+          time,
+          isCritical,
+        });
 
         alarmSettings = realm.objectForPrimaryKey(
           'alarm_settings',
           taskId
         );
+
+        console.log('✅ Alarm Settings Loaded:', alarmSettings);
       }
     }
   } catch (e) {
-    console.error('[AlarmRingingScreen] Failed to access Realm', e);
+    console.error('❌ Realm lookup failed:', e);
   }
 
+  /* ============================================================
+     3️⃣ IF DATA NOT READY → LOADING UI
+  ============================================================ */
   if (!alarmId || !alarm) {
-    console.warn('[AlarmRingingScreen] Missing alarm or alarmId', {
+    console.warn('⚠ Missing alarm data:', {
       alarmId,
       hasAlarm: !!alarm,
     });
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>⏰ Alarm Ringing...</Text>
-      <Text style={styles.subtitle}>
-        Loading alarm details...
-      </Text>
-    </View>
-  );
-}
 
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>⏰ Alarm Ringing...</Text>
+        <Text style={styles.subtitle}>Loading alarm details...</Text>
+      </View>
+    );
+  }
 
+  /* ============================================================
+     4️⃣ COMPUTED RULES
+  ============================================================ */
   const requireBrainGame =
     isCritical || alarmSettings?.requireBrainGame === true;
-  const snoozeMinutes =
-  typeof alarmSettings?.snoozeMinutes === 'number' &&
-  alarmSettings.snoozeMinutes > 0
-    ? alarmSettings.snoozeMinutes
-    : 5; // default
 
-  /* -----------------------------
-     BLOCK BACK BUTTON
-  ----------------------------- */
+  const snoozeMinutes =
+    typeof alarmSettings?.snoozeMinutes === 'number' &&
+    alarmSettings.snoozeMinutes > 0
+      ? alarmSettings.snoozeMinutes
+      : 5;
+
+  console.log('🧠 requireBrainGame =', requireBrainGame);
+  console.log('😴 snoozeMinutes =', snoozeMinutes);
+
+  /* ============================================================
+     5️⃣ BLOCK BACK BUTTON ALWAYS
+  ============================================================ */
   useEffect(() => {
+    console.log('🚫 Blocking Android back button');
+
     const sub = BackHandler.addEventListener(
       'hardwareBackPress',
-      () => true // 🚫 block always
+      () => true
     );
+
     return () => sub.remove();
   }, []);
 
-  /* -----------------------------
-     STOP (NON-CRITICAL ONLY)
-     - Stop current sound
-     - Cancel current firing
-     - Schedule next occurrence
-     - Close AlarmActivity task
-  ----------------------------- */
+  /* ============================================================
+     6️⃣ STOP ALARM (ONLY NON-CRITICAL)
+     - Stop sound
+     - Cancel alarm
+     - Schedule next week
+     - Exit AlarmActivity safely
+  ============================================================ */
   const stopAlarm = useCallback(async () => {
-    if (requireBrainGame) return;
-    if (actionLockedRef.current) return;
+    console.log('\n======================================');
+    console.log('🛑 STOP BUTTON PRESSED');
+    console.log('======================================');
+
+    if (requireBrainGame) {
+      console.warn('❌ Stop blocked → BrainGame required');
+      return;
+    }
+
+    if (actionLockedRef.current) {
+      console.warn('⚠ Action already locked');
+      return;
+    }
+
     actionLockedRef.current = true;
 
     try {
-      console.log('[AlarmRingingScreen.stopAlarm] pressed', {
-        alarmId,
-        taskId,
-        dayOfWeek,
-        time,
-        isCritical,
-        requireBrainGame,
-      });
+      console.log('➡ Stopping ringing sound...');
       await stopRinging();
+
+      console.log('➡ Cancelling current alarm...');
       await cancelAlarm(alarmId);
 
+      console.log('➡ Scheduling next week alarm...');
       await scheduleAlarm({
         alarmId,
-        taskId,
         dayOfWeek,
         time,
         isCritical,
       });
+
+      console.log('✅ Alarm stopped + rescheduled successfully');
+
+    } catch (e) {
+      console.error('❌ Stop alarm failed:', e);
+
     } finally {
-      console.log('[AlarmRingingScreen.stopAlarm] calling exitAlarmSafely()');
+      console.log('➡ Closing AlarmActivity safely...');
       exitAlarmSafely();
     }
-  }, [alarmId, taskId, dayOfWeek, time, isCritical, requireBrainGame]);
+  }, [alarmId, dayOfWeek, time, isCritical, requireBrainGame]);
 
-
-
-
+  /* ============================================================
+     7️⃣ SNOOZE (ONLY NON-CRITICAL)
+  ============================================================ */
   const onSnoozePress = useCallback(async () => {
-    if (requireBrainGame || isCritical) return;
-    if (actionLockedRef.current) return;
+    console.log('\n======================================');
+    console.log('😴 SNOOZE BUTTON PRESSED');
+    console.log('======================================');
+
+    if (requireBrainGame || isCritical) {
+      console.warn('❌ Snooze blocked → Critical alarm');
+      return;
+    }
+
+    if (actionLockedRef.current) {
+      console.warn('⚠ Action already locked');
+      return;
+    }
+
     actionLockedRef.current = true;
 
     try {
-      console.log('[AlarmRingingScreen.onSnoozePress] pressed', {
-        alarmId,
-        snoozeMinutes,
-        requireBrainGame,
-        isCritical,
-      });
+      console.log('➡ Scheduling snooze...');
       await snoozeAlarm({
         alarmId,
         snoozeMinutes,
       });
+
+      console.log('✅ Snooze scheduled successfully');
+
+    } catch (e) {
+      console.error('❌ Snooze failed:', e);
+
     } finally {
-      console.log('[AlarmRingingScreen.onSnoozePress] calling exitAlarmSafely()');
+      console.log('➡ Closing AlarmActivity safely...');
       exitAlarmSafely();
     }
-  }, [alarmId, snoozeMinutes, isCritical, requireBrainGame]);
+  }, [alarmId, snoozeMinutes, requireBrainGame, isCritical]);
 
-
-  /* -----------------------------
-     START BRAIN GAME
-  ----------------------------- */
+  /* ============================================================
+     8️⃣ START BRAIN GAME (Critical Only)
+  ============================================================ */
   const startBrainGame = useCallback(() => {
-    navigation.replace('BrainGameHub', {
-  taskId,
-  alarmId,
-});
-  }, []);
+    console.log('🧠 START BRAIN GAME pressed → Navigating...');
 
-  /* -----------------------------
-     UI
-  ----------------------------- */
+    navigation.replace('BrainGameHub', {
+      taskId,
+      alarmId,
+    });
+  }, [navigation, taskId, alarmId]);
+
+  /* ============================================================
+     9️⃣ UI
+  ============================================================ */
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        ⏰ ALARM
-      </Text>
+      <Text style={styles.title}>⏰ ALARM</Text>
 
       <Text style={styles.subtitle}>
         Task ID: {taskId}
@@ -192,9 +241,7 @@ export default function AlarmRingingScreen() {
         </Text>
       )}
 
-      {/* ------------------
-          BRAIN GAME
-      ------------------ */}
+      {/* Brain Game Button */}
       {requireBrainGame && (
         <TouchableOpacity
           style={styles.primaryButton}
@@ -205,40 +252,36 @@ export default function AlarmRingingScreen() {
           </Text>
         </TouchableOpacity>
       )}
-       
-     {!isCritical && (
-  <TouchableOpacity
-    style={[
-      styles.stopButton,
-      { backgroundColor: '#f5a623', marginVertical: 16 },
-    ]}
-    onPress={onSnoozePress}
-  >
-    <Text style={styles.stopText}>SNOOZE</Text>
-  </TouchableOpacity>
-)}
 
-      {/* ------------------
-          STOP (ONLY IF ALLOWED)
-      ------------------ */}
+      {/* Snooze */}
+      {!isCritical && (
+        <TouchableOpacity
+          style={[
+            styles.stopButton,
+            { backgroundColor: '#f5a623', marginVertical: 16 },
+          ]}
+          onPress={onSnoozePress}
+        >
+          <Text style={styles.stopText}>SNOOZE</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Stop */}
       {!requireBrainGame && (
         <TouchableOpacity
           style={styles.stopButton}
           onPress={stopAlarm}
         >
-          <Text style={styles.stopText}>
-            STOP ALARM
-          </Text>
+          <Text style={styles.stopText}>STOP ALARM</Text>
         </TouchableOpacity>
       )}
 
+      {/* Critical Note */}
       {isCritical && (
         <Text style={styles.criticalNote}>
           🔒 Critical alarm cannot be stopped directly
         </Text>
       )}
-      
-
     </View>
   );
 }

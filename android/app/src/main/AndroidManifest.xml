@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
 
 
 
@@ -22,11 +24,11 @@
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
 
-      <receiver
+    <receiver
     android:name=".alarm.AlarmReceiver"
-    android:exported="true"
-      android:permission="android.permission.WAKE_LOCK" 
-      android:enabled="true"/>
+    android:exported="false"
+    android:enabled="true" />
+
 
   <service
   android:name=".alarm.AlarmService"
@@ -46,16 +48,17 @@
     </intent-filter>
   </activity>
 
-  <activity
-    android:name=".alarm.AlarmActivity"
-    android:exported="true"
-    android:launchMode="singleTask"
-    android:taskAffinity="com.unbrokenrna.alarm.TASK"
-    android:excludeFromRecents="true"
-    android:turnScreenOn="true"
-    android:showWhenLocked="true"
-    android:screenOrientation="portrait"
-    android:theme="@style/Theme.AppCompat.NoActionBar" />
+<activity
+  android:name=".alarm.AlarmActivity"
+  android:exported="false"
+  android:showWhenLocked="true"
+  android:turnScreenOn="true"
+  android:excludeFromRecents="true"
+  android:launchMode="singleTask"/>
+
+
+
+
 
 
     </application>

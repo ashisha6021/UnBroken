@@ -22,7 +22,7 @@ import AlarmScreen from '../app/alarms-setter';
 import AlarmSettings from '../app/alarms-setter/alarmsetting1';
 import AlarmRingingScreen from '../app/alarms-setter/ringing123';
 import TaskList from '../app/settings/task-list';
-
+import EditProfileScreen from "../app/settings/EditProfileScreen";
 // navigation/RootStack.js
 import BrainGameHub from '../app/brain-games/BrainGameHub';
 
@@ -32,6 +32,7 @@ import MemoryFlash from '../app/brain-games/games/MemoryFlash';
 import ColorTrap from '../app/brain-games/games/ColorTrap';
 import OrderChaos from '../app/brain-games/games/OrderChaos';
 import PatternBeast from '../app/brain-games/games/PatternBeast';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -64,6 +65,8 @@ export default function RootStack({ initialRoute, initialAlarmData }) {
       <Stack.Screen name="Long-Goals List" component={LongGoalsList} options={{ ...COMPACT_HEADER }} />
       <Stack.Screen name="Short-Goals List" component={ShortGoalsList} options={{ ...COMPACT_HEADER }} />
       <Stack.Screen name="Task List" component={TaskList} options={{...COMPACT_HEADER}}/>
+      <Stack.Screen name="Edit Profile" component={EditProfileScreen} options={{ ...COMPACT_HEADER }} />
+
 
       <Stack.Screen name="Alarms" component={AlarmScreen} options={{ ...COMPACT_HEADER }} />
       <Stack.Screen name="Alarm Setting" component={AlarmSettings} options={{ ...COMPACT_HEADER }} />

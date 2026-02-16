@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B0F1A"
+    android:padding="24dp">
+
+    <!-- 🔥 Alarm Glow Background -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/alarm_gradient_bg" />
+
+    <!-- ⏰ Big Alarm Title -->
+    <TextView
+        android:id="@+id/alarmTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⏰ Alarm Ringing"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:layout_marginTop="60dp" />
+
+    <!-- 🕒 Time Display -->
+    <TextView
+        android:id="@+id/alarmTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="07:30 AM"
+        android:textSize="52sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:layout_below="@id/alarmTitle" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/alarmSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Wake up. Your goals are waiting."
+        android:textSize="16sp"
+        android:textColor="#BBBBBB"
+        android:gravity="center"
+        android:layout_marginTop="14dp"
+        android:layout_below="@id/alarmTime" />
+
+    <!-- 🔘 Premium Stop Button -->
+ <!-- 🔘 Button Row -->
+<LinearLayout
+    android:id="@+id/buttonRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_marginBottom="40dp"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <!-- Snooze Button -->
+    <Button
+        android:id="@+id/snoozeButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="SNOOZE 5 MIN"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:background="@drawable/alarm_button_snooze"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Stop Button -->
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:text="STOP ALARM"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/alarm_button_bg"/>
+</LinearLayout>
+
+
+</RelativeLayout>

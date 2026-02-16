@@ -13,6 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { addTask, updateTask, saveUser } from '../../storage/storage-sqlite';
 import { DAYS_OF_WEEK, DAY_NAMES } from '../../types';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { usePremiumAlert } from "../../store/usePremiumAlert";
 
 const sortDaysOfWeek = (days) =>
   [...days].sort(
@@ -28,6 +29,7 @@ export default function TasksScreen({ navigation, route }) {
   const editingTaskIdFromRoute = route?.params?.editingTaskId ?? null;
   const shortGoalId = route?.params?.shortGoalId ?? null;
   const longGoalId = route?.params?.longGoalId ?? null;
+  const showAlert = usePremiumAlert((state) => state.showAlert);
 
   const {
     shortGoals,
@@ -108,17 +110,23 @@ useEffect(() => {
 
   const handleAddTask = async () => {
     if (!selectedShortGoalId) {
-      Alert.alert('Error', 'Please select a short-term goal');
+      
+      showAlert("Task Required", "Please select a short-term goal.","Ok","error");
+      
+
       return;
     }
 
     if (!taskName.trim()) {
-      Alert.alert('Error', 'Please enter a task name');
+      
+      showAlert("Task Required", "Please enter a task name.","Ok","error");
       return;
     }
 
     if (selectedDays.length === 0) {
-      Alert.alert('Error', 'Please select at least one day');
+    
+      showAlert("Task Required", "Please select at least one day.","Ok","error");
+      
       return;
     }
 
@@ -183,7 +191,9 @@ useEffect(() => {
 
   const handleFinish = async () => {
     if (!canFinishSetup) {
-      Alert.alert('Required', 'Please add at least one task');
+     
+      showAlert("Task Required", "Please add at least one task","Ok","error");
+
       return;
     }
 
@@ -195,20 +205,19 @@ useEffect(() => {
     await saveUser(updatedUser);
     setUser(updatedUser);
 
-    Alert.alert(
-      'Setup Complete',
-      'Your discipline system is ready. Start completing tasks daily.',
-      [
-        {
-          text: 'Start',
-          onPress: () =>
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Home' }],
-            }),
-        },
-      ]
-    );
+   showAlert(
+  "Setup Complete 🎉",
+  "Your discipline system is ready. Start completing tasks daily.",
+  "START",
+  "success",
+  () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  }
+);
+
   };
 
   const selectedShortGoal = shortGoals.find(
@@ -773,7 +782,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: COLORS.surfaceElevated,
     borderRadius: BORDER_RADIUS.xl,
-
+    marginTop:SPACING.md,
     paddingVertical: 16,
     paddingHorizontal: 18,
 

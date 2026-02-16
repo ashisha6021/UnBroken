@@ -14,6 +14,9 @@ object AlarmSoundPlayer {
 
   private const val TAG = "UNBROKEN_ALARM_DATA"
 
+  fun isRinging(): Boolean {
+  return player != null && player!!.isPlaying
+}
 
   /* ----------------------------------
      START ALARM SOUND

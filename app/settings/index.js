@@ -32,14 +32,35 @@ export default function SettingsScreen({ navigation }) {
       style={styles.container}
       contentContainerStyle={styles.content}
     >
-      {/* PROFILE */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>PROFILE</Text>
-        <View style={styles.card}>
-          <Text style={styles.label}>Name</Text>
-          <Text style={styles.value}>{user?.name || 'Champ'}</Text>
-        </View>
-      </View>
+<View style={styles.profileCard}>
+
+  {/* Left Side: Avatar */}
+  <View style={styles.avatarCircle}>
+    <Text style={styles.avatarText}>
+      {(user?.name?.[0] || "C").toUpperCase()}
+    </Text>
+  </View>
+
+  {/* Middle: Name */}
+  <View style={styles.profileDetails}>
+    <Text style={styles.profileLabel}>Profile Name</Text>
+
+    <Text style={styles.profileName}>
+      {user?.name || "Champ"}
+    </Text>
+  </View>
+
+  {/* Right Side: Edit */}
+  <TouchableOpacity
+    style={styles.editButton}
+    onPress={() => navigation.navigate("Edit Profile")}
+  >
+    <Text style={styles.editIcon}>✏️</Text>
+  </TouchableOpacity>
+
+</View>
+
+
 
       {/* STATISTICS */}
       <View style={styles.section}>
@@ -132,6 +153,20 @@ const styles = StyleSheet.create({
   /* ============================
      SCREEN BASE
   ============================ */
+  editButton: {
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  borderRadius: BORDER_RADIUS.full,
+  backgroundColor: "rgba(255,255,255,0.08)",
+},
+
+editText: {
+  fontSize: 12,
+  fontWeight: "800",
+  color: COLORS.accent,
+  letterSpacing: 1,
+},
+
 
   container: {
     flex: 1,
@@ -308,4 +343,80 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
+ profileCard: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: COLORS.surfaceElevated,
+  borderRadius: 25,
+  paddingVertical: SPACING.lg,
+  paddingHorizontal: SPACING.lg,
+  marginBottom: SPACING.lg,
+
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.08)",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.4,
+  shadowRadius: 14,
+  elevation: 8,
+},
+
+/* Avatar */
+avatarCircle: {
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: "rgba(0,255,150,0.15)",
+
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+avatarText: {
+  fontSize: 22,
+  fontWeight: "900",
+  color: COLORS.accent,
+},
+
+/* Name Section */
+profileDetails: {
+  flex: 1,
+  marginLeft: SPACING.md,
+},
+
+profileLabel: {
+  fontSize: 13,
+  fontWeight: "700",
+  color: COLORS.textMuted,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+},
+
+profileName: {
+  fontSize: 20,
+  fontWeight: "900",
+  color: COLORS.textPrimary,
+  marginTop: 4,
+},
+
+/* Edit Button */
+editButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: "rgba(255,255,255,0.06)",
+
+  alignItems: "center",
+  justifyContent: "center",
+
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.08)",
+},
+
+editIcon: {
+  fontSize: 16,
+},
+
+
+
 });

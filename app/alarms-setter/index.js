@@ -26,7 +26,7 @@ import {
 
 import { DAY_NAMES } from '../../types';
 import { COLORS, SPACING, TYPOGRAPHY ,BORDER_RADIUS} from '../../constants/theme';
-
+import { usePremiumAlert } from '../../store/usePremiumAlert';
 import {
   scheduleAlarm,
   cancelAlarm,
@@ -56,7 +56,7 @@ export default function AlarmScreen() {
 
   const [showAlarmPermission, setShowAlarmPermission] = useState(false);
   const [pendingAlarmAction, setPendingAlarmAction] = useState(null);
-
+  const showAlert = usePremiumAlert((state) => state.showAlert);
 
   const task = useAppStore((s) =>
     s.tasks.find((t) => t.id === taskId)
@@ -69,7 +69,7 @@ export default function AlarmScreen() {
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
   const [alarmSettings, setAlarmSettingsLocal] = useState(null);
-
+  const showConfirm = usePremiumAlert((s) => s.showConfirm);
   // --------------------
   // LOAD ALARMS
   // --------------------
@@ -95,7 +95,7 @@ export default function AlarmScreen() {
  
 
 const isGroupButtonEnabled = selectedDays.length > 0;
-
+ 
 
 
 
@@ -161,15 +161,12 @@ const isGroupButtonEnabled = selectedDays.length > 0;
         if (existing.enabled) {
           await cancelAlarm(existing.id);
           await scheduleAlarm({
-            alarmId: updated.id,
-            taskId,
-            dayOfWeek: updated.dayOfWeek,
-            time: updated.time,
-            isCritical: updated.isCritical,
-            snoozeDuration: alarmSettings?.snoozeDuration ?? 300,
-            requireBrainGame:
-              updated.isCritical || alarmSettings?.requireBrainGame,
-          });
+          alarmId: updated.id,
+          taskId,
+          dayOfWeek: updated.dayOfWeek,
+          time: updated.time,
+          isCritical: updated.isCritical,
+        });
             const isalarm = await isAlarmScheduled1(updated.id);
 
     showAlarmToast1(
@@ -280,14 +277,12 @@ const setAlarmType = async (alarm, isCritical) => {
   await cancelAlarm(updated.id);
 
   await scheduleAlarm({
-    alarmId: updated.id,
-    taskId,
-    dayOfWeek: updated.dayOfWeek,
-    time: updated.time,
-    isCritical,
-    snoozeDuration: alarmSettings?.snoozeDuration ?? 300,
-    requireBrainGame: true,
-  });
+      alarmId: updated.id,
+      taskId,
+      dayOfWeek: updated.dayOfWeek,
+      time: updated.time,
+      isCritical,
+    });
   
   // 4️⃣ Verify OS-level scheduling
   const isAlarmSet = await isAlarmScheduled1(updated.id);
@@ -303,27 +298,23 @@ const setAlarmType = async (alarm, isCritical) => {
 };
 
 const confirmCritical = (alarm) => {
-  Alert.alert(
-    'Critical Alarm ⚠️',
-    'This alarm will ring continuously and require a brain game.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Make Critical',
-        onPress: async () => {
-          const allowed = await canScheduleExactAlarms();
-          if (!allowed) {
-            setPendingAlarmAction(() => () =>
-              setAlarmType(alarm, true)
-            );
-            setShowAlarmPermission(true);
-            return;
-          }
+  showConfirm(
+    "Critical Alarm ⚠️",
+    "This alarm will ring continuously and require a brain game.",
+    "Cancel",
+    "Make Critical",
+    async () => {
+      const allowed = await canScheduleExactAlarms();
+      if (!allowed) {
+        setPendingAlarmAction(() => () =>
+          setAlarmType(alarm, true)
+        );
+        setShowAlarmPermission(true);
+        return;
+      }
 
-          await setAlarmType(alarm, true);
-        },
-      },
-    ]
+      await setAlarmType(alarm, true);
+    }
   );
 };
 
@@ -337,7 +328,13 @@ const confirmCritical = (alarm) => {
 const toggleEnabled = async (day) => {
   const alarm = getAlarmForDay(day);
   if (!alarm?.time) {
-    Alert.alert('Set time first');
+   
+    showAlert(
+  "Task Required",
+  "Set time first.",
+  "OK",
+  "error"
+);
     return;
   }
 
@@ -361,13 +358,13 @@ const toggleEnabled = async (day) => {
   await dbUpdateTaskAlarm(updated);
 
   if (updated.enabled) {
-    await scheduleAlarm({
-      alarmId: updated.id,
-      taskId,
-      dayOfWeek: updated.dayOfWeek,
-      time: updated.time,
-      isCritical: updated.isCritical,
-    });
+   await scheduleAlarm({
+  alarmId: updated.id,
+  taskId,
+  dayOfWeek: updated.dayOfWeek,
+  time: updated.time,
+  isCritical: updated.isCritical,
+});
 
     const isalarm = await isAlarmScheduled1(updated.id);
     showAlarmToast1(
