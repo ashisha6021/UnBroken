@@ -7,13 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   FlatList,
-  Alert, Modal, 
+  Alert, Modal, Animated
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { addShortGoal, updateShortGoal } from '../../storage/storage-sqlite';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import DeadlinePicker from '../../utils/DeadlinePicker123';
 import { usePremiumAlert } from "../../store/usePremiumAlert";
+import { formatDateDisplay } from '../../utils/dateHelpers';
 
 export default function ShortGoalsScreen({ navigation, route }) {
   const editingGoalId = route?.params?.editingGoalId ?? null;
@@ -37,7 +38,16 @@ export default function ShortGoalsScreen({ navigation, route }) {
   );
   const [deadline, setDeadline] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [expandedGoalId, setExpandedGoalId] = useState(null);
+  const [expandedMap, setExpandedMap] = useState({});
+const [overflowMap, setOverflowMap] = useState({});
+ 
+  const updatedGoalId = route?.params?.updatedGoalId ?? null;
+
+const scrollRef = useRef(null);
+const goalPositions = useRef({});
+const glowAnim = useRef(new Animated.Value(0)).current;
+
+const [highlightedGoalId, setHighlightedGoalId] = useState(null);
   const showAlert = usePremiumAlert((state) => state.showAlert);
   const editingGoal = isEditing
     ? shortGoals.find(g => g.id === editingGoalId)
@@ -47,6 +57,39 @@ export default function ShortGoalsScreen({ navigation, route }) {
     ? longGoals.find(lg => lg.id === editingGoal.longGoalId)
     : null;
 
+const detectOverflow = (e, id) => {
+
+  if (overflowMap[id] !== undefined) return;
+
+  const lines = e.nativeEvent?.lines;
+  if (!lines) return;
+
+  const lastLine = lines[1]?.text || "";
+
+  const cleaned = lastLine
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+
+  const isOverflow =
+    lines.length === 2 &&
+    /…|\.\.\./.test(cleaned);
+
+  if (isOverflow) {
+    setOverflowMap(prev => ({
+      ...prev,
+      [id]: true
+    }));
+  }
+};
+
+const toggleExpand = (id) => {
+  if (!overflowMap[id]) return;
+
+  setExpandedMap(prev => ({
+    ...prev,
+    [id]: !prev[id]
+  }));
+};
   // Initialize selected long goal
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -62,6 +105,50 @@ export default function ShortGoalsScreen({ navigation, route }) {
       hasInitialized.current = true;
     }
   }, [routeLongGoalId, longGoals]);
+
+ useEffect(() => {
+  if (!updatedGoalId) return;
+
+  setHighlightedGoalId(updatedGoalId);
+
+  setTimeout(() => {
+    const y = goalPositions.current[updatedGoalId];
+
+    if (y !== undefined && scrollRef.current) {
+      scrollRef.current.scrollTo({
+        y: y +20,
+        animated: true,
+      });
+    }
+
+    setTimeout(() => {
+      setHighlightedGoalId(null);
+    }, 2000);
+
+  }, 300);
+
+}, [updatedGoalId]);
+
+useEffect(() => {
+  if (!highlightedGoalId) return;
+
+  glowAnim.setValue(0);
+
+  Animated.sequence([
+    Animated.timing(glowAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: false,
+    }),
+    Animated.delay(1200),
+    Animated.timing(glowAnim, {
+      toValue: 0,
+      duration: 400,
+      useNativeDriver: false,
+    })
+  ]).start();
+
+}, [highlightedGoalId]);
 
   // Scroll selector to active long goal
   useEffect(() => {
@@ -140,7 +227,10 @@ const longGoalDeadline = activeLongGoal?.deadline
 
         await updateShortGoal(updatedGoal);
         updateInStore(updatedGoal);
-        navigation.goBack();
+        navigation.navigate("Short-Goal Setting", {
+          updatedGoalId: editingGoalId,
+          longGoalId
+        });
       } else {
         const newGoal = {
           id: Date.now().toString(),
@@ -171,7 +261,11 @@ const longGoalDeadline = activeLongGoal?.deadline
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+            ref={scrollRef}
+            style={styles.container}
+            contentContainerStyle={styles.content}
+          >
       <Text style={styles.instruction}>
         {isEditing
           ? 'Update your short-term goal.'
@@ -285,7 +379,7 @@ const longGoalDeadline = activeLongGoal?.deadline
       </View>
 
       {/* FORM */}
-      <Text style={styles.label}>Add Long-Term Goal</Text>
+      <Text style={styles.label}>Add Short-Term Goal</Text>
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -335,30 +429,56 @@ const longGoalDeadline = activeLongGoal?.deadline
           <Text style={styles.sectionTitle}>Short-Term Goals</Text>
 
           {filteredShortGoals.map(goal => (
-    <View key={goal.id} style={styles.existingGoalCard}>
+    <Animated.View
+  key={goal.id}
+  onLayout={(e) => {
+    goalPositions.current[goal.id] = e.nativeEvent.layout.y;
+  }}
+  style={[
+    styles.existingGoalCard,
+    highlightedGoalId === goal.id && {
+      shadowColor: COLORS.accent,
+      shadowOpacity: glowAnim,
+      shadowRadius: glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 18]
+      }),
+      borderWidth: glowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 2]
+      }),
+      borderColor: COLORS.accent
+    }
+  ]}
+>
 
   {/* TOP: TITLE */}
-  <TouchableOpacity
-    onPress={() =>
-      setExpandedGoalId(expandedGoalId === goal.id ? null : goal.id)
-    }
-    activeOpacity={0.8}
+<TouchableOpacity
+  activeOpacity={0.8}
+  onPress={() => toggleExpand(goal.id)}
+>
+  <Text
+    style={styles.existingGoalTitle}
+    numberOfLines={expandedMap[goal.id] ? undefined : 2}
+    onTextLayout={(e) => {
+      if (!expandedMap[goal.id]) {
+        detectOverflow(e, goal.id);
+      }
+    }}
   >
-    <Text
-      style={styles.existingGoalTitle}
-      numberOfLines={expandedGoalId === goal.id ? 10 : 2}
-      ellipsizeMode="tail"
-    >
-      {goal.title}
-    </Text>
+    {goal.title}
+  </Text>
 
-    {/* Expand Hint */}
-    {goal.title.length > 40 && (
-      <Text style={styles.expandHint}>
-        {expandedGoalId === goal.id ? "Show less ▲" : "Read more ▼"}
-      </Text>
-    )}
-  </TouchableOpacity>
+
+  {overflowMap[goal.id] && (
+    <Text style={styles.expandHint}>
+      {expandedMap[goal.id] ? "Show less ▲" : "Read more ▼"}
+    </Text>
+  )}
+    <Text style={styles.goalDeadline}>
+  Deadline: {goal.deadline ? formatDateDisplay(goal.deadline) : "—"}
+</Text>
+</TouchableOpacity>
 
   <View
   style={{
@@ -403,8 +523,7 @@ const longGoalDeadline = activeLongGoal?.deadline
       </TouchableOpacity>
     </View>
   </View>
-</View>
-
+</Animated.View>
 
           ))}
         </View>
@@ -420,7 +539,12 @@ const styles = StyleSheet.create({
   /* ===========================
      BASE
   ============================ */
-
+ goalDeadline: {
+  fontSize: 12,
+  color: COLORS.textMuted,
+  marginTop: 4,
+  fontWeight: "600",
+},
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

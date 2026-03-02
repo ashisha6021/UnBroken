@@ -259,6 +259,42 @@ export async function cancelAlarmsForTask(taskId, alarms) {
 }
 
 /* ============================================================
+   9️⃣ CANCEL ALL OS ALARMS BY TASK ID
+   🔥 IMPORTANT FOR TASK DELETE
+============================================================ */
+export async function cancelAllAlarmsByTaskId(taskId, alarms = []) {
+  if (Platform.OS !== 'android') return;
+
+  console.log('======================================');
+  console.log('🔥 cancelAllAlarmsByTaskId() CALLED');
+  console.log('taskId=', taskId);
+  console.log('alarmsCount=', alarms.length);
+  console.log('======================================');
+
+  try {
+    for (const alarm of alarms) {
+
+      if (!alarm?.id) continue;
+
+      console.log('➡ Cancelling alarm:', alarm.id);
+
+      // cancel main alarm
+      await AlarmModule.cancelScheduledAlarm(alarm.id);
+
+      // cancel snooze alarm also
+      const snoozeId = `${alarm.id}_SNOOZE`;
+      await AlarmModule.cancelScheduledAlarm(snoozeId);
+
+      console.log('✅ Cancelled alarm + snooze:', alarm.id);
+    }
+  } catch (e) {
+    console.warn('❌ cancelAllAlarmsByTaskId failed safely', e);
+  }
+
+  console.log('======================================');
+}
+
+/* ============================================================
    8️⃣ DEBUG ALARM (10 SECONDS TEST)
 ============================================================ */
 export async function scheduleDebugAlarm() {

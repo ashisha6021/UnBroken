@@ -12,9 +12,9 @@ import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/them
 import TasksScreen from '../setup/tasks';
 
 export default function SettingsScreen({ navigation }) {
-  const { user, longGoals: storeLongGoals, shortGoals, streak,tasks } = useAppStore();
+  const { user, longGoals: storeLongGoals, shortGoals, streak,tasks,taskAlarms } = useAppStore();
   const [longGoals, setLongGoals] = useState(storeLongGoals);
-
+ console.log("THis is alarm data",taskAlarms)
   // Sync store → local state
   useEffect(() => {
     setLongGoals(storeLongGoals);
@@ -119,7 +119,24 @@ export default function SettingsScreen({ navigation }) {
 <Text style={styles.statValue}>{tasks.length}</Text>
 
 
+
         </TouchableOpacity>
+
+        <TouchableOpacity
+  style={styles.statCard}
+  onPress={() => navigation.navigate('Alarm List')}
+>
+  <Text style={styles.statLabel}>ALARMS</Text>
+
+  <Text style={styles.statValue}>
+  {
+    Object.values(taskAlarms)
+      .flat()
+      .filter(alarm => alarm.enabled).length
+  }
+</Text>
+  
+</TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Streak')}
@@ -129,6 +146,21 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
+
+  {/* ============================
+    LOSERS SECTION ENTRY
+============================ */}
+
+  <TouchableOpacity
+    style={styles.losersButton}
+    onPress={() => navigation.navigate('Losers Screen')}
+    activeOpacity={0.85}
+  >
+    <Text style={styles.losersButtonText}>
+      LOSER'S SECTION
+    </Text>
+  
+  </TouchableOpacity>
 
       {/* REWARDS & PUNISHMENTS */}
       {/* <View style={styles.section}>
@@ -175,11 +207,12 @@ editText: {
 
   content: {
     padding: SPACING.xl,
-    paddingBottom: SPACING.xxl,
+    paddingTop:20,
+    paddingBottom: SPACING.sm,
   },
 
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
 
   /* ============================
@@ -199,27 +232,7 @@ editText: {
      PROFILE CARD
   ============================ */
 
-  card: {
-    backgroundColor: COLORS.surfaceElevated,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
 
-    borderRadius: BORDER_RADIUS.xl,
-
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-
-    marginBottom: SPACING.md,
-
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
-  },
 
   label: {
     fontSize: 15,
@@ -242,14 +255,14 @@ editText: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: SPACING.md,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
 
   streakCard: {
     flex: 1,
     backgroundColor: COLORS.surfaceElevated,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.md,
 
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -284,7 +297,7 @@ editText: {
 
   statCard: {
     backgroundColor: COLORS.surfaceElevated,
-    paddingVertical: SPACING.lg,
+    paddingVertical:20 ,
     paddingHorizontal: SPACING.lg,
     borderRadius: BORDER_RADIUS.xl,
 
@@ -321,7 +334,7 @@ editText: {
   ============================ */
 
   button: {
-    marginTop: SPACING.lg,
+    marginTop: 10,
     backgroundColor: COLORS.accent,
 
     paddingVertical: 18,
@@ -348,7 +361,7 @@ editText: {
   alignItems: "center",
   backgroundColor: COLORS.surfaceElevated,
   borderRadius: 25,
-  paddingVertical: SPACING.lg,
+  paddingVertical: 19,
   paddingHorizontal: SPACING.lg,
   marginBottom: SPACING.lg,
 
@@ -417,6 +430,37 @@ editIcon: {
   fontSize: 16,
 },
 
+losersButton: {
+  width: "100%",
+  marginTop: 2,
+  paddingVertical: SPACING.md,
+  borderRadius: BORDER_RADIUS.xl,
+
+  backgroundColor: "rgba(255, 0, 0, 0.08)",
+  borderWidth: 1,
+  borderColor: "rgba(255, 0, 0, 0.3)",
+
+  alignItems: "center",
+  justifyContent: "center",
+
+  shadowColor: "#ff0000",
+  shadowOpacity: 0.25,
+  shadowRadius: 12,
+  elevation: 8,
+},
+
+losersButtonText: {
+  fontSize: 14,
+  fontWeight: "900",
+  color: "#ff4d4d",
+  letterSpacing: 1,
+},
+
+losersSubText: {
+  fontSize: 11,
+  color: COLORS.textMuted,
+  marginTop: 4,
+},
 
 
 });

@@ -6,43 +6,44 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../../store/useAppStore';
 import { addLongGoal, updateLongGoal } from '../../storage/storage-sqlite';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { formatDateDisplay } from '../../utils/dateHelpers';
 import DeadlinePicker from '../../utils/DeadlinePicker123';
 import { usePremiumAlert } from '../../store/usePremiumAlert';
+
 export default function LongGoalsScreen({ navigation, route }) {
-  const {
-    longGoals,
-    addLongGoal: addToStore,
-    updateLongGoal: updateInStore,
-  } = useAppStore();
+
+  const { longGoals, addLongGoal: addToStore, updateLongGoal: updateInStore } = useAppStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [activeEditId, setActiveEditId] = useState(null);
   const [deadline, setDeadline] = useState(null);
-  const [expandedGoalId, setExpandedGoalId] = useState(null);
+  const [activeEditId, setActiveEditId] = useState(null);
 
-const toggleGoalExpand = (id) => {
-  setExpandedGoalId(prev => (prev === id ? null : id));
-};
+  const [expandedMap, setExpandedMap] = useState({});
+  const [overflowMap, setOverflowMap] = useState({});
+  const [titleVersionMap, setTitleVersionMap] = useState({}); // 🔥 NEW
 
-
-  const hasPrefilled = useRef(false);
   const scrollRef = useRef(null);
+  const hasPrefilled = useRef(false);
 
   const editingGoalId = route?.params?.editingGoalId ?? null;
   const isEditing = Boolean(activeEditId);
   const showAlert = usePremiumAlert((state) => state.showAlert);
+  const goalPositions = useRef({});
+
   const clearRouteEdit = () => {
     navigation.setParams({ editingGoalId: undefined });
   };
+
+  /* =============================
+     EDIT PREFILL
+  ============================== */
 
   useEffect(() => {
     if (!editingGoalId) return;
@@ -60,6 +61,83 @@ const toggleGoalExpand = (id) => {
     clearRouteEdit();
   }, [editingGoalId, longGoals]);
 
+  /* =============================
+     RESET + FORCE REMEASURE
+  ============================== */
+
+  useEffect(() => {
+
+    setOverflowMap({});
+
+    setTitleVersionMap(prev => {
+      const updated = { ...prev };
+
+      longGoals.forEach(goal => {
+        updated[goal.id] = (updated[goal.id] || 0) + 1;
+      });
+
+      return updated;
+    });
+
+  }, [longGoals]);
+
+  /* =============================
+     SHOW MORE DETECTION
+  ============================== */
+
+  const detectOverflow = (e, id) => {
+
+    if (overflowMap[id] !== undefined) return;
+
+    const lines = e.nativeEvent?.lines;
+    if (!lines) return;
+
+    const lastLine = lines[1]?.text || "";
+
+    const cleaned = lastLine
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .trim();
+
+    const isOverflow =
+      lines.length === 2 &&
+      /…|\.\.\./.test(cleaned);
+
+    if (isOverflow) {
+      setOverflowMap(prev => ({
+        ...prev,
+        [id]: true
+      }));
+    }
+  };
+
+const scrollToGoal = (goalId) => {
+  const y = goalPositions.current[goalId];
+
+  if (y === undefined) return;
+
+  scrollRef.current?.scrollTo({
+    y: y + 60,   // same UX offset you used in tasks
+    animated: true,
+  });
+};
+  /* =============================
+     EXPAND TOGGLE
+  ============================== */
+
+  const toggleExpand = (id) => {
+
+    if (!overflowMap[id]) return;
+
+    setExpandedMap(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  /* =============================
+     SAVE LOGIC
+  ============================== */
+
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -67,21 +145,21 @@ const toggleGoalExpand = (id) => {
   };
 
   const handleSave = async () => {
+
     if (!title.trim()) {
-   
-      showAlert('Task Required', 'Please enter a goal title.',"Ok","error");
+      showAlert('Task Required', 'Please enter a goal title.', "Ok", "error");
       return;
     }
 
     if (!deadline) {
-      
-      showAlert('Task Required', 'Please select a deadline.',"Ok","error");
+      showAlert('Task Required', 'Please select a deadline.', "Ok", "error");
       return;
     }
 
     try {
+
       if (activeEditId) {
-        // ✅ UPDATE
+
         const updated = {
           id: activeEditId,
           title: title.trim(),
@@ -92,10 +170,16 @@ const toggleGoalExpand = (id) => {
         await updateLongGoal(updated);
         updateInStore(updated);
 
-        setActiveEditId(null);
-        hasPrefilled.current = false;
+        const editedGoalId = activeEditId;
+
+      setActiveEditId(null);
+      hasPrefilled.current = false;
+
+      setTimeout(() => {
+        scrollToGoal(editedGoalId);
+      }, 200);
       } else {
-        // ✅ ADD
+
         const goal = {
           id: Date.now().toString(),
           title: title.trim(),
@@ -112,19 +196,24 @@ const toggleGoalExpand = (id) => {
       }
 
       resetForm();
+
     } catch (err) {
       console.error('Error saving long goal:', err);
     }
   };
 
+  /* =============================
+     UI
+  ============================== */
+
   return (
-    <SafeAreaView edges={['top']} style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+
         <Text style={styles.instruction}>
           Define your long-term goals. These guide your short-term actions.
         </Text>
 
-        {/* FORM */}
         <View style={styles.form}>
           <TextInput
             style={styles.input}
@@ -152,106 +241,109 @@ const toggleGoalExpand = (id) => {
           </TouchableOpacity>
         </View>
 
-        {/* LIST */}
         {longGoals.length > 0 && (
           <View style={styles.goalsList}>
             <Text style={styles.sectionTitle}>Your Long-Term Goals</Text>
 
-           {longGoals.map(goal => {
-  const isExpanded = expandedGoalId === goal.id;
+            {longGoals.map(goal => {
 
-  return (
-    <View key={goal.id} style={styles.goalItem}>
+              const isExpanded = expandedMap[goal.id];
 
-      {/* TITLE + SHOW MORE */}
-      <TouchableOpacity
-        onPress={() => toggleGoalExpand(goal.id)}
-        activeOpacity={0.8}
-      >
-        <Text
-          style={styles.goalTitle}
-          numberOfLines={isExpanded ? 10 : 2}
-          ellipsizeMode="tail"
-        >
-          {goal.title}
-        </Text>
+              return (
+              <View
+                key={goal.id}
+                onLayout={(e) => {
+                  goalPositions.current[goal.id] = e.nativeEvent.layout.y;
+                }}
+                style={styles.goalItem}
+              >
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => toggleExpand(goal.id)}
+                  >
+                    <Text
+                      key={`${goal.id}-${titleVersionMap[goal.id] || 0}`} // 🔥 FORCE REMOUNT
+                      style={styles.goalTitle}
+                      numberOfLines={isExpanded ? undefined : 2}
+                      onTextLayout={(e) => {
+                        if (!expandedMap[goal.id]) {
+                          detectOverflow(e, goal.id);
+                        }
+                      }}
+                    >
+                      {goal.title}
+                    </Text>
 
-        {/* SHOW MORE BUTTON */}
-    {goal.title.length > 35 && (
-  <Text style={styles.showMoreText}>
-    {isExpanded ? "▲ Show less" : "▼ Show more"}
-  </Text>
-)}
+                    {overflowMap[goal.id] && (
+                      <Text style={styles.showMoreText}>
+                        {isExpanded ? "▲ Show less" : "▼ Show more"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
 
-      </TouchableOpacity>
+                  {isExpanded && goal.description && (
+                    <Text style={styles.goalDescription}>
+                      {goal.description}
+                    </Text>
+                  )}
 
-      {/* DESCRIPTION (ONLY IF EXPANDED) */}
-      {isExpanded && goal.description && (
-        <Text style={styles.goalDescription}>
-          {goal.description}
-        </Text>
-      )}
+                  <Text style={styles.goalDeadline}>
+                    Deadline: {formatDateDisplay(goal.deadline)}
+                  </Text>
 
-      {/* DEADLINE */}
-      <Text style={styles.goalDeadline}>
-        Deadline: {formatDateDisplay(goal.deadline)}
-      </Text>
-      <View style={styles.divider} />
-      {/* FOOTER */}
-      <View style={styles.goalFooter}>
-        {/* EDIT */}
-       <TouchableOpacity
-        style={styles.editGoalButton}
-        onPress={() => {
-          setTitle(goal.title);
-          setDescription(goal.description || '');
-          setDeadline(goal.deadline);
-          setActiveEditId(goal.id);
-          hasPrefilled.current = true;
+                  <View style={styles.divider} />
 
-          requestAnimationFrame(() => {
-            scrollRef.current?.scrollTo({ y: 0, animated: true });
-          });
-        }}
-      >
-        <Text style={styles.editGoalButtonText}>
-          EDIT
-        </Text>
-      </TouchableOpacity>
+                  <View style={styles.goalFooter}>
 
+                    <TouchableOpacity
+                      style={styles.editGoalButton}
+                      onPress={() => {
+                        setTitle(goal.title);
+                        setDescription(goal.description || '');
+                        setDeadline(goal.deadline);
+                        setActiveEditId(goal.id);
+                        hasPrefilled.current = true;
 
-        {/* RIGHT SIDE */}
-        <View style={styles.goalFooterRight}>
-          <Text style={styles.badge}>
-            {Math.round(goal.completionPercentage || 0)}%
-          </Text>
+                        requestAnimationFrame(() => {
+                          scrollRef.current?.scrollTo({ y: 0, animated: true });
+                        });
+                      }}
+                    >
+                      <Text style={styles.editGoalButtonText}>
+                        EDIT
+                      </Text>
+                    </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.addShortGoalButton}
-            onPress={() =>
-              navigation.navigate("Short-Goal Setting", {
-                longGoalId: goal.id,
-              })
-            }
-          >
-            <Text style={styles.addShortGoalText}>
-              + Short Goal
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-})}
+                    <View style={styles.goalFooterRight}>
+                      <Text style={styles.badge}>
+                        {Math.round(goal.completionPercentage || 0)}%
+                      </Text>
 
+                      <TouchableOpacity
+                        style={styles.addShortGoalButton}
+                        onPress={() =>
+                          navigation.navigate("Short-Goal Setting", {
+                            longGoalId: goal.id,
+                          })
+                        }
+                      >
+                        <Text style={styles.addShortGoalText}>
+                          + Short Goal
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
+
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({

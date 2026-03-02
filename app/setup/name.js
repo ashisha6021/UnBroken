@@ -80,7 +80,7 @@ export default function NameScreen({ navigation }) {
 
             <TextInput
               style={styles.input}
-              placeholder="Ashish Anand..."
+              placeholder="Champ..."
               placeholderTextColor={COLORS.textMuted}
               value={name}
               onChangeText={setName}
@@ -96,7 +96,7 @@ export default function NameScreen({ navigation }) {
             onPress={handleContinue}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>CONTINUE →</Text>
+            <Text style={styles.buttonText}>CONTINUE</Text>
           </TouchableOpacity>
 
           {/* Small Footer Hint */}

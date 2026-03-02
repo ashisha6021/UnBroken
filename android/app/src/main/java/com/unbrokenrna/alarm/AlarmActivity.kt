@@ -87,31 +87,60 @@ class AlarmActivity : Activity() {
     /* ============================================================
        ⚠ CRITICAL ALARM CASE
     ============================================================ */
-   if (isCritical) {
-     snoozeBtn.visibility = View.GONE 
+if (isCritical) {
 
-  Log.w("UNBROKEN_ALARM_DATA", "⚠ Critical alarm → Unlock required")
+  snoozeBtn.visibility = View.GONE
+
+  val keyguard =
+    getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+
+  val isLocked = keyguard.isKeyguardLocked
+
+  Log.d("UNBROKEN_ALARM_DATA", "🔐 isLocked=$isLocked")
+
+  // ✅ CASE 1: Phone already unlocked → go directly to brain game
+  if (!isLocked) {
+
+    Log.d("UNBROKEN_ALARM_DATA", "✅ Phone already unlocked → Starting Brain Game NOW")
+
+    val gameIntent =
+      Intent(this@AlarmActivity, MainActivity::class.java).apply {
+
+        putExtra("alarmId", alarmId)
+        putExtra("isCritical", true)
+
+        addFlags(
+          Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
+        )
+      }
+
+    startActivity(gameIntent)
+    finish()
+    return
+  }
+
+  // ✅ CASE 2: Phone locked → show Unlock UI
+  Log.w("UNBROKEN_ALARM_DATA", "⚠ Locked phone → Unlock required")
+
   stopBtn.setBackgroundResource(R.drawable.alarm_button_critical)
 
-  title.text = "🧠 Critical Alarm\nUnlock phone to continue"
+  title.text = "🧠 Critical Alarm\nUnlock to begin challenge"
 
-  stopBtn.text = "UNLOCK REQUIRED"
+  stopBtn.text = "UNLOCK"
   stopBtn.isEnabled = true
 
   stopBtn.setOnClickListener {
 
     Log.d("UNBROKEN_ALARM_DATA", "🔓 Unlock button pressed")
 
-    val keyguard =
-      getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-
-    keyguard.requestDismissKeyguard(this,
+    keyguard.requestDismissKeyguard(
+      this,
       object : KeyguardManager.KeyguardDismissCallback() {
 
         override fun onDismissSucceeded() {
-          super.onDismissSucceeded()
 
-          Log.d("UNBROKEN_ALARM_DATA", "✅ Phone unlocked → Launching Brain Game")
+          Log.d("UNBROKEN_ALARM_DATA", "✅ Unlock success → Launching Brain Game")
 
           val gameIntent =
             Intent(this@AlarmActivity, MainActivity::class.java).apply {
@@ -126,24 +155,23 @@ class AlarmActivity : Activity() {
             }
 
           startActivity(gameIntent)
-
-          // Close lockscreen alarm screen
           finish()
         }
 
         override fun onDismissCancelled() {
-          Log.w("UNBROKEN_ALARM_DATA", "❌ Unlock cancelled by user")
+          Log.w("UNBROKEN_ALARM_DATA", "❌ Unlock cancelled")
         }
 
         override fun onDismissError() {
           Log.e("UNBROKEN_ALARM_DATA", "❌ Unlock error")
         }
-      })
-
+      }
+    )
   }
 
   return
 }
+
     snoozeBtn.setOnClickListener {
 
   Log.d("UNBROKEN_ALARM_DATA", "😴 Snooze pressed")

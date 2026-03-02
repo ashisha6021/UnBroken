@@ -2,7 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { getRandomQuote } from '../utils/quotes';
+import { getDailyQuote } from '../utils/quoteService';
+
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../constants/theme';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { getDisplayName } from "../utils/name";
@@ -17,11 +18,18 @@ export default function HomeScreen({ navigation }) {
   const { user, isLoading, streak } = useAppStore();
   const [quote, setQuote] = useState('');
 
-  useEffect(() => {
-    console.log('[HomeScreen] useEffect running...');
-    setQuote(getRandomQuote());
-    // initializeApp is now called in App.js (native root)
-  }, []);
+useEffect(() => {
+  console.log('[HomeScreen] useEffect running...');
+
+  const loadQuote = async () => {
+    const q = await getDailyQuote();
+    console.log("This is the quote",q)
+    setQuote(q);
+  };
+
+  loadQuote();
+}, []);
+
   // console.log("SCHEDULING DEBUG ALaRM") 
   // scheduleDebugAlarm()
   // console.log("DEBUG ALaRM SET")

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useAppStore } from '../../store/useAppStore';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../../constants/theme';
 import { formatDateDisplay } from '../../utils/dateHelpers';
-import { useState } from "react";
+import { useState,useRef } from "react";
 
 
 export default function LongGoalsList({ navigation }) {
@@ -14,9 +14,40 @@ export default function LongGoalsList({ navigation }) {
     });
   };
   const [expandedId, setExpandedId] = useState(null);
+  const [overflowMap, setOverflowMap] = useState({});
+  const titleMapRef = useRef({});
 
 const toggleExpand = (id) => {
   setExpandedId(prev => (prev === id ? null : id));
+};
+
+const detectOverflow = (e, id, title) => {
+  const lines = e.nativeEvent?.lines;
+  if (!lines) return;
+
+  // If title changed -> reset overflow
+  if (titleMapRef.current[id] !== title) {
+    titleMapRef.current[id] = title;
+    setOverflowMap(prev => {
+      const updated = { ...prev };
+      delete updated[id];
+      return updated;
+    });
+  }
+
+  if (overflowMap[id] !== undefined) return;
+
+  const lastLine = lines[1]?.text || "";
+
+  const cleaned = lastLine
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+
+  const isOverflow =
+    lines.length === 2 &&
+    /…|\.\.\./.test(cleaned);
+
+  setOverflowMap(prev => ({ ...prev, [id]: isOverflow }));
 };
 
   return (
@@ -48,15 +79,16 @@ const toggleExpand = (id) => {
       {/* ✅ TITLE FULL WIDTH */}
       <TouchableOpacity onPress={() => toggleExpand(goal.id)}>
         <Text
-          style={styles.goalTitle}
-          numberOfLines={isExpanded ? 10 : 2}
-          ellipsizeMode="tail"
-        >
+        style={styles.goalTitle}
+        numberOfLines={isExpanded ? undefined : 2}
+        ellipsizeMode="tail"
+        onTextLayout={(e) => detectOverflow(e, goal.id, goal.title)}
+      >
           {goal.title}
         </Text>
 
         {/* SHOW MORE INDICATOR */}
-        {goal.title.length > 25 && (
+        {overflowMap[goal.id] && (
           <Text style={styles.showMoreText}>
             {isExpanded ? "Show less ▲" : "Show more ▼"}
           </Text>
@@ -100,6 +132,7 @@ const toggleExpand = (id) => {
     </>
   );
 }
+
 
 const styles = StyleSheet.create({
   /* ===========================

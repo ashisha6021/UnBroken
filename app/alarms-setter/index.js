@@ -70,6 +70,9 @@ export default function AlarmScreen() {
   const [selectedDays, setSelectedDays] = useState([]);
   const [alarmSettings, setAlarmSettingsLocal] = useState(null);
   const showConfirm = usePremiumAlert((s) => s.showConfirm);
+  const [showTimeConflictModal, setShowTimeConflictModal] = useState(false);
+
+   const allTaskAlarms = useAppStore((s) => s.taskAlarms);
   // --------------------
   // LOAD ALARMS
   // --------------------
@@ -96,6 +99,31 @@ export default function AlarmScreen() {
 
 const isGroupButtonEnabled = selectedDays.length > 0;
  
+const isTimeConflict = (day, time, currentAlarmId) => {
+  if (!time) return false;
+
+  for (const taskIdKey in allTaskAlarms) {
+    const alarms = allTaskAlarms[taskIdKey] || [];
+
+    for (const alarm of alarms) {
+
+      // skip self
+      if (alarm.id === currentAlarmId) continue;
+
+      // only check enabled alarms
+      if (!alarm.enabled) continue;
+
+      if (
+        String(alarm.dayOfWeek) === String(day) &&
+        alarm.time === time
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
 
 
 
@@ -303,8 +331,10 @@ const confirmCritical = (alarm) => {
     "This alarm will ring continuously and require a brain game.",
     "Cancel",
     "Make Critical",
+    "warning", // ✅ type comes here
     async () => {
       const allowed = await canScheduleExactAlarms();
+
       if (!allowed) {
         setPendingAlarmAction(() => () =>
           setAlarmType(alarm, true)
@@ -327,26 +357,39 @@ const confirmCritical = (alarm) => {
   // --------------------
 const toggleEnabled = async (day) => {
   const alarm = getAlarmForDay(day);
+
   if (!alarm?.time) {
-   
-    showAlert(
-  "Task Required",
-  "Set time first.",
-  "OK",
-  "error"
-);
+    showAlert("Task Required", "Set time first.", "OK", "error");
     return;
   }
 
-  // 🔐 Permission ONLY when turning ON
-  if (!alarm.enabled) {
-    const allowed = await canScheduleExactAlarms();
-    if (!allowed) {
-      setPendingAlarmAction(() => () => toggleEnabled(day));
-      setShowAlarmPermission(true);
-      return;
-    }
+  // ================================
+  // 🚨 CHECK CONFLICT BEFORE ENABLE
+  // ================================
+if (!alarm.enabled) {
+
+  const conflict = isTimeConflict(day, alarm.time, alarm.id);
+
+  if (conflict) {
+    showConfirm(
+      "Time Slot Already Taken",
+      "Another task already has an alarm at this time.\nPlease change the time.",
+      "Cancel",
+      "Change Time",
+      "warning",
+      () => setSinglePickerDay(day)
+    );
+
+    return; // 🚨 STOP HERE
   }
+
+  const allowed = await canScheduleExactAlarms();
+  if (!allowed) {
+    setPendingAlarmAction(() => () => toggleEnabled(day));
+    setShowAlarmPermission(true);
+    return;
+  }
+}
 
   const updated = {
     ...alarm,
@@ -358,15 +401,16 @@ const toggleEnabled = async (day) => {
   await dbUpdateTaskAlarm(updated);
 
   if (updated.enabled) {
-   await scheduleAlarm({
-  alarmId: updated.id,
-  taskId,
-  dayOfWeek: updated.dayOfWeek,
-  time: updated.time,
-  isCritical: updated.isCritical,
-});
+    await scheduleAlarm({
+      alarmId: updated.id,
+      taskId,
+      dayOfWeek: updated.dayOfWeek,
+      time: updated.time,
+      isCritical: updated.isCritical,
+    });
 
     const isalarm = await isAlarmScheduled1(updated.id);
+
     showAlarmToast1(
       isalarm
         ? `🔔 Alarm set for ${DAY_NAMES[day]} at ${updated.time}`
@@ -376,7 +420,7 @@ const toggleEnabled = async (day) => {
     await cancelAlarm(updated.id);
 
     const isalarm = await isAlarmScheduled1(updated.id);
-    console.log("THIS IS IS ALRM for canclel",isalarm)
+
     showAlarmToast1(
       !isalarm
         ? `⛔ Alarm canceled for ${DAY_NAMES[day]} at ${updated.time}`
@@ -384,7 +428,6 @@ const toggleEnabled = async (day) => {
     );
   }
 };
-
 
 
 
@@ -519,7 +562,21 @@ const toggleEnabled = async (day) => {
             onChange={applyGroupTime}
           />
         )}
+
+
       </ScrollView>
+
+              {/* 🔗 HELP LINK */}
+<TouchableOpacity
+  style={styles.helpLink}
+  activeOpacity={0.7}
+  onPress={() => navigation.navigate("Alarm Help")}
+>
+  <Text style={styles.helpLinkText}>
+    Having trouble with alarms?{" "}
+    <Text style={styles.helpLinkAccent}>Fix it here.</Text>
+  </Text>
+</TouchableOpacity>
 
       <TouchableOpacity
         style={styles.doneButton}
@@ -679,6 +736,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
+    //  justifyContent: "space-between", // ✅ distributes space
+  // flexWrap: "wrap",               // ✅ allows wrapping if needed
     backgroundColor: COLORS.surfaceElevated,
     borderRadius: BORDER_RADIUS.xl,
     paddingVertical: 14,
@@ -693,7 +752,7 @@ const styles = StyleSheet.create({
   },
 
  dayLabel: {
-  width: 90,            // ✅ Fixed width so it never shrinks
+  width: 80,            // ✅ Fixed width so it never shrinks
   fontSize: 14,
   fontWeight: "700",
   color: COLORS.textPrimary,
@@ -705,13 +764,13 @@ const styles = StyleSheet.create({
   ============================ */
 
   timeBox: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-    marginRight: SPACING.sm,
+    marginRight: SPACING.xs,
   },
 
   timeText: {
@@ -798,6 +857,53 @@ const styles = StyleSheet.create({
 applyTextDisabled: {
   color: COLORS.textMuted,
   fontWeight: "700",
+},
+/* ===========================
+   SMART HELP BANNER
+=========================== */
+
+helpBanner: {
+  backgroundColor: "rgba(255,200,0,0.08)",
+  borderWidth: 1,
+  borderColor: "rgba(255,200,0,0.25)",
+  padding: SPACING.md,
+  borderRadius: BORDER_RADIUS.xl,
+  marginBottom: SPACING.xl,
+},
+
+helpBannerTitle: {
+  fontSize: 14,
+  fontWeight: "900",
+  color: COLORS.warning,
+  marginBottom: 4,
+},
+
+helpBannerText: {
+  fontSize: 13,
+  fontWeight: "500",
+  color: COLORS.textSecondary,
+  lineHeight: 18,
+},
+
+/* ===========================
+   HELP LINK (BOTTOM)
+=========================== */
+
+helpLink: {
+  marginTop:SPACING.xs,
+  paddingVertical: 12,
+  alignItems: "center",
+},
+
+helpLinkText: {
+  fontSize: 13,
+  color: COLORS.textMuted,
+  fontWeight: "600",
+},
+
+helpLinkAccent: {
+  color: COLORS.accent,
+  fontWeight: "800",
 },
 
 });

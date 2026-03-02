@@ -1,10 +1,63 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ================================
+# ✅ React Native Default Rules
+# ================================
 
-# Add any project specific keep options here:
+# Keep React Native classes
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+
+# Prevent stripping of native methods
+-keepclassmembers class * {
+    native <methods>;
+}
+
+# Keep annotations
+-keepattributes *Annotation*
+
+# ================================
+# ✅ Realm Rules (IMPORTANT)
+# ================================
+
+# Realm uses reflection heavily
+-keep class io.realm.** { *; }
+-keep class org.bson.** { *; }
+-dontwarn io.realm.**
+-dontwarn org.bson.**
+
+# Keep model classes (Realm schema)
+-keep class com.unbrokenrna.** { *; }
+
+# ================================
+# ✅ React Navigation Safe Rules
+# ================================
+
+-dontwarn androidx.navigation.**
+
+# ================================
+# ✅ AsyncStorage + NetInfo Rules
+# ================================
+
+-dontwarn com.reactnativecommunity.**
+
+# ================================
+# ✅ Keep Debugging Symbols (Optional)
+# ================================
+
+# Remove logs in release (optional)
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+
+# ================================
+# ✅ General Safety
+# ================================
+
+# Don't warn for missing optional deps
+-dontwarn javax.annotation.**
+-dontwarn kotlin.**
+
+-keepclassmembers class * extends io.realm.RealmObject {
+    <fields>;
+}

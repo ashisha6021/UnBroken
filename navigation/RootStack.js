@@ -17,6 +17,7 @@ import SettingsScreen from '../app/settings';
 import RulesScreen from '../app/settings/rules';
 import LongGoalsList from '../app/settings/long-goals-list';
 import ShortGoalsList from '../app/settings/short-goals-list';
+import AlarmListScreen from '../app/settings/alarm-list';
 
 import AlarmScreen from '../app/alarms-setter';
 import AlarmSettings from '../app/alarms-setter/alarmsetting1';
@@ -32,8 +33,8 @@ import MemoryFlash from '../app/brain-games/games/MemoryFlash';
 import ColorTrap from '../app/brain-games/games/ColorTrap';
 import OrderChaos from '../app/brain-games/games/OrderChaos';
 import PatternBeast from '../app/brain-games/games/PatternBeast';
-
-
+import AlarmHelpScreen from '../app/alarms-setter/AlarmHelpScreen'
+import LosersScreen from '../app/delete-page/index'
 const Stack = createNativeStackNavigator();
 
 const COMPACT_HEADER = {
@@ -65,6 +66,7 @@ export default function RootStack({ initialRoute, initialAlarmData }) {
       <Stack.Screen name="Long-Goals List" component={LongGoalsList} options={{ ...COMPACT_HEADER }} />
       <Stack.Screen name="Short-Goals List" component={ShortGoalsList} options={{ ...COMPACT_HEADER }} />
       <Stack.Screen name="Task List" component={TaskList} options={{...COMPACT_HEADER}}/>
+      <Stack.Screen name="Alarm List" component={AlarmListScreen} options={{...COMPACT_HEADER}}/>
       <Stack.Screen name="Edit Profile" component={EditProfileScreen} options={{ ...COMPACT_HEADER }} />
 
 
@@ -78,6 +80,10 @@ export default function RootStack({ initialRoute, initialAlarmData }) {
       <Stack.Screen name="COLOR_TRAP" component={ColorTrap} options={{ headerShown: false }} />
       <Stack.Screen name="ORDER_CHAOS" component={OrderChaos} options={{ headerShown: false }} />
       <Stack.Screen name="PATTERN_BEAST" component={PatternBeast} options={{ headerShown: false }} />
+      <Stack.Screen name="Alarm Help" component={AlarmHelpScreen} options={{ headerShown: false }}/>
+
+      <Stack.Screen name="Losers Screen" component={LosersScreen} options={{headerShown: false}}/>
+
 
     </Stack.Navigator>
   );

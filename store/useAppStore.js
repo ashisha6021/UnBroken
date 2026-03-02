@@ -6,6 +6,7 @@ import {
   getLongGoals,
   getShortGoals,
   getTasks,
+  dbGetTaskAlarmsByTask
 } from '../storage/storage-sqlite';
 import { calculateStreak } from '../utils/streak';
 import { calculateTodayProgress } from '../service/progressService';
@@ -80,7 +81,7 @@ export const useAppStore = create((set, get) => ({
           streak,
           isLoading: false,
         });
-
+        await get().loadAllTaskAlarms();
         isInitializing = false;
         initPromise = null;
       } catch (error) {
@@ -115,10 +116,34 @@ export const useAppStore = create((set, get) => ({
         todayProgress,
         streak,
       });
+       await get().loadAllTaskAlarms();
     } catch (error) {
       console.error('[Store] Refresh error:', error);
     }
   },
+
+  // --------------------
+// LOAD ALL TASK ALARMS (ONCE)
+// --------------------
+loadAllTaskAlarms: async () => {
+  const tasks = get().tasks;
+
+  const all = {};
+
+  for (const task of tasks) {
+    const data = await dbGetTaskAlarmsByTask(task.id);
+
+    if (data?.length) {
+      all[task.id] = data.map(a => ({
+        ...a,
+        enabled: Boolean(a.enabled),
+        isCritical: Boolean(a.isCritical),
+      }));
+    }
+  }
+
+  set({ taskAlarms: all });
+},
 
   // --------------------
   // USER
