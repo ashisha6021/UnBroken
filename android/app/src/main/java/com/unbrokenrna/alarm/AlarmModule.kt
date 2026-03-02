@@ -30,12 +30,7 @@ class AlarmModule(
   @ReactMethod
   fun schedule(alarmId: String, triggerAt: Double, isCritical: Boolean) {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.schedule() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "triggerAt=${java.util.Date(triggerAt.toLong())}")
-    Log.d(TAG, "isCritical=$isCritical")
-    Log.d(TAG, "==============================")
+
 
     try {
       AlarmScheduler.scheduleExact(
@@ -45,7 +40,7 @@ class AlarmModule(
         isCritical
       )
 
-      Log.d(TAG, "✅ AlarmScheduler.scheduleExact() SUCCESS")
+
 
     } catch (e: Exception) {
       Log.e(TAG, "❌ ERROR scheduling alarm", e)
@@ -59,18 +54,12 @@ class AlarmModule(
   @ReactMethod
   fun cancelScheduledAlarm(alarmId: String) {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.cancelScheduledAlarm() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "==============================")
 
     try {
       AlarmScheduler.cancel(
         reactContext,
         alarmId
       )
-
-      Log.d(TAG, "✅ AlarmScheduler.cancel() SUCCESS")
 
     } catch (e: Exception) {
       Log.e(TAG, "❌ ERROR cancelling alarm", e)
@@ -83,10 +72,7 @@ class AlarmModule(
   @ReactMethod
   fun isAlarmScheduled(alarmId: String, promise: Promise) {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.isAlarmScheduled() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "==============================")
+
 
     try {
       val intent = Intent(reactContext, AlarmReceiver::class.java).apply {
@@ -102,7 +88,7 @@ class AlarmModule(
 
       val exists = pendingIntent != null
 
-      Log.d(TAG, "Alarm exists? → $exists")
+     
 
       promise.resolve(exists)
 
@@ -118,19 +104,16 @@ class AlarmModule(
   @ReactMethod
   fun stopRinging() {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.stopRinging() CALLED")
-    Log.d(TAG, "Stopping sound + foreground service")
-    Log.d(TAG, "==============================")
+  
 
     try {
       AlarmSoundPlayer.stop()
-      Log.d(TAG, "✅ AlarmSoundPlayer stopped")
+    
 
       val serviceIntent = Intent(reactContext, AlarmService::class.java)
       reactContext.stopService(serviceIntent)
 
-      Log.d(TAG, "✅ AlarmService stopped")
+      
 
       val nm =
         reactContext.getSystemService(Context.NOTIFICATION_SERVICE)
@@ -138,7 +121,6 @@ class AlarmModule(
 
       nm.cancel(AlarmService.NOTIFICATION_ID)
 
-      Log.d(TAG, "✅ Alarm notification cancelled")
 
     } catch (e: Exception) {
       Log.e(TAG, "❌ ERROR stopping ringing", e)
@@ -156,13 +138,7 @@ class AlarmModule(
     isCritical: Boolean
   ) {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.scheduleSnooze() CALLED")
-    Log.d(TAG, "schedulerId=$schedulerId")
-    Log.d(TAG, "originalAlarmId=$originalAlarmId")
-    Log.d(TAG, "triggerAt=${java.util.Date(triggerAt.toLong())}")
-    Log.d(TAG, "isCritical=$isCritical")
-    Log.d(TAG, "==============================")
+
 
     try {
       AlarmScheduler.scheduleSnooze(
@@ -172,8 +148,6 @@ class AlarmModule(
         triggerAt.toLong(),
         isCritical
       )
-
-      Log.d(TAG, "✅ Snooze scheduled SUCCESSFULLY")
 
     } catch (e: Exception) {
       Log.e(TAG, "❌ ERROR scheduling snooze", e)
@@ -186,13 +160,11 @@ class AlarmModule(
   @ReactMethod
   fun finishAlarmTask() {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.finishAlarmTask() CALLED")
-    Log.d(TAG, "==============================")
+ 
 
     try {
       AlarmActivity.instance?.finish()
-      Log.d(TAG, "✅ AlarmActivity closed")
+      
 
     } catch (e: Exception) {
       Log.e(TAG, "❌ ERROR finishing AlarmActivity", e)
@@ -207,10 +179,6 @@ class AlarmModule(
 
     val alarmId = MainActivity.latestAlarmId
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.getLaunchIntentData() CALLED")
-    Log.d(TAG, "latestAlarmId=$alarmId")
-    Log.d(TAG, "==============================")
 
     if (alarmId != null) {
 
@@ -219,7 +187,7 @@ class AlarmModule(
 
       MainActivity.latestAlarmId = null
 
-      Log.d(TAG, "Returning alarmId to JS + clearing")
+    
 
       promise.resolve(map)
 
@@ -257,12 +225,7 @@ fun openExactAlarmSettings() {
   @ReactMethod
   fun exitAppCompletely() {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "AlarmModule.exitAppCompletely() CALLED")
-    Log.d(TAG, "Killing app process fully")
-    Log.d(TAG, "==============================")
-
-    try {
+   try {
 
       AlarmSoundPlayer.stop()
 

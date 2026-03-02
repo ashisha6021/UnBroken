@@ -447,6 +447,7 @@ taskAccentBar:{
   bottom:12,
   width:4,
   backgroundColor:COLORS.accent,
+  borderRadius: 10,
 },
 
 taskAccentBar2:{
@@ -456,6 +457,7 @@ taskAccentBar2:{
   bottom:12,
   width:4,
   backgroundColor:COLORS.warning,
+  borderRadius: 10,
 },
 
 showMoreText:{

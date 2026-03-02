@@ -365,10 +365,12 @@ alarmAccentBar:{
   bottom:12,
   width:4,
   backgroundColor:COLORS.accent,
+  borderRadius: 10,
 },
 
 criticalAccent:{
-  backgroundColor:"#ff4d4d"
+  backgroundColor:"#ff4d4d",
+  borderRadius: 10,
 },
 
 dayAccentBar:{
@@ -378,6 +380,7 @@ dayAccentBar:{
   bottom:12,
   width:4,
   backgroundColor:COLORS.warning,
+  borderRadius: 10,
 },
 
 criticalBadge:{

@@ -35,6 +35,9 @@ import OrderChaos from '../app/brain-games/games/OrderChaos';
 import PatternBeast from '../app/brain-games/games/PatternBeast';
 import AlarmHelpScreen from '../app/alarms-setter/AlarmHelpScreen'
 import LosersScreen from '../app/delete-page/index'
+
+import UserGuideScreen from '../app/user-guide/index'
+import UserGuideDetailScreen from '../app/user-guide/UserGuideDetailScreen';
 const Stack = createNativeStackNavigator();
 
 const COMPACT_HEADER = {
@@ -83,6 +86,8 @@ export default function RootStack({ initialRoute, initialAlarmData }) {
       <Stack.Screen name="Alarm Help" component={AlarmHelpScreen} options={{ headerShown: false }}/>
 
       <Stack.Screen name="Losers Screen" component={LosersScreen} options={{headerShown: false}}/>
+      <Stack.Screen name="User Guide" component={UserGuideScreen} options={{headerShown: false}}/>
+      <Stack.Screen name="Detail User Guide" component={UserGuideDetailScreen} options={{headerShown: false}}/>
 
 
     </Stack.Navigator>

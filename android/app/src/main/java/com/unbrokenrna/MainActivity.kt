@@ -13,29 +13,18 @@ class MainActivity : ReactActivity() {
   companion object {
     private const val TAG = "UNBROKEN_ALARM_DATA"
 
-    // ✅ Store latest alarmId
-    var latestAlarmId: String? = null
+   var latestAlarmId: String? = null
   }
 
   override fun getMainComponentName(): String = "UnBrokenRNA"
 
   override fun onCreate(savedInstanceState: Bundle?) {
-
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "MainActivity.onCreate() CALLED")
-    Log.d(TAG, "intent=$intent")
-    Log.d(TAG, "extras=${intent.extras}")
-    Log.d(TAG, "==============================")
-
-    super.onCreate(savedInstanceState)
+     super.onCreate(savedInstanceState)
 
     val alarmId = intent?.getStringExtra("alarmId")
 
     if (!alarmId.isNullOrEmpty()) {
       latestAlarmId = alarmId
-
-      Log.d(TAG, "🔥 Cold Start Alarm Detected")
-      Log.d(TAG, "Stored latestAlarmId=$alarmId")
     } else {
       Log.d(TAG, "Normal launch (no alarmId)")
     }
@@ -43,11 +32,7 @@ class MainActivity : ReactActivity() {
 
   override fun onNewIntent(intent: Intent?) {
 
-    Log.d(TAG, "==============================")
-    Log.d(TAG, "MainActivity.onNewIntent() CALLED")
-    Log.d(TAG, "newIntent=$intent")
-    Log.d(TAG, "extras=${intent?.extras}")
-    Log.d(TAG, "==============================")
+ 
 
     super.onNewIntent(intent)
 
@@ -57,10 +42,7 @@ class MainActivity : ReactActivity() {
 
     if (!alarmId.isNullOrEmpty()) {
       latestAlarmId = alarmId
-
-      Log.d(TAG, "🔥 Notification Tap Alarm Detected")
-      Log.d(TAG, "Stored latestAlarmId=$alarmId")
-    } else {
+   } else {
       Log.w(TAG, "onNewIntent() missing alarmId")
     }
   }

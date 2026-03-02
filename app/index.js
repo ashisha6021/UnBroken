@@ -7,30 +7,73 @@ import { getDailyQuote } from '../utils/quoteService';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../constants/theme';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { getDisplayName } from "../utils/name";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getRandomQuote, MOTIVATIONAL_QUOTES } from '../utils/quotes';
+
 
 export default function HomeScreen({ navigation }) {
 
   if (global.__ALARM_ACTIVE__) {
-  return null; // ⛔ DO NOT render anything
-}
- 
+    return null;
+  }
 
   const { user, isLoading, streak } = useAppStore();
+
   const [quote, setQuote] = useState('');
+  const [usedQuotes, setUsedQuotes] = useState([]);
 
-useEffect(() => {
- 
+  useEffect(() => {
 
-  const loadQuote = async () => {
-    const q = await getDailyQuote();
-   
-    setQuote(q);
+    const loadQuote = async () => {
+
+      const savedQuote = await AsyncStorage.getItem("DAILY_QUOTE");
+      const savedDate = await AsyncStorage.getItem("DAILY_QUOTE_DATE");
+      const today = new Date().toDateString();
+
+      // ✅ Same day → use saved instantly
+      if (savedQuote && savedDate === today) {
+        setQuote(savedQuote);
+        return;
+      }
+
+      // ✅ First time OR new day → show local immediately
+      const localQuote = getRandomQuote();
+      setQuote(localQuote);
+
+      // 🌐 Background upgrade (API if needed)
+      const apiQuote = await getDailyQuote();
+
+      if (apiQuote) {
+        setQuote(apiQuote);
+      }
+    };
+
+    loadQuote();
+
+  }, []);
+
+  // 🔥 Smart No-Repeat Generator
+  const getNewQuote = () => {
+    const remaining = MOTIVATIONAL_QUOTES.filter(q => !usedQuotes.includes(q));
+
+    if (remaining.length === 0) {
+      setUsedQuotes([]);
+      return MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+    }
+
+    const newQuote = remaining[Math.floor(Math.random() * remaining.length)];
+    setUsedQuotes(prev => [...prev, newQuote]);
+    return newQuote;
   };
 
-  loadQuote();
-}, []);
+  // 🔁 Change Quote Handler
+  const handleChangeQuote = async () => {
+    const newQuote = getNewQuote();
+    setQuote(newQuote);
 
-
+    await AsyncStorage.setItem("DAILY_QUOTE", newQuote);
+    await AsyncStorage.setItem("DAILY_QUOTE_DATE", new Date().toDateString());
+  };
 
   const handleLogProgress = () => {
     const hasCompletedSetup = user?.hasCompletedSetup === true;
@@ -42,7 +85,6 @@ useEffect(() => {
   };
 
   if (isLoading === true) {
-    
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <ActivityIndicator size="large" color={COLORS.accent} />
@@ -54,63 +96,80 @@ useEffect(() => {
   const hasCompletedSetup = user?.hasCompletedSetup === true;
 
   return (
-    <ScreenWrapper>   
-      <SafeAreaView edges={['top']} style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.greeting}>HEY {userName.toUpperCase()}</Text>
+    <ScreenWrapper>
+     <SafeAreaView edges={['top']} style={styles.container}>
 
-        <View style={styles.quoteContainer}>
-          <Text style={styles.quote}>{quote}</Text>
-        </View>
-
-        {!hasCompletedSetup && (
+          {/* 🔥 Help Button */}
           <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => navigation.navigate('Setup')}
+            style={styles.helpButton}
             activeOpacity={0.8}
+            onPress={() => navigation.navigate("User Guide")}
           >
-            <Text style={styles.ctaText}>LET'S START OUR JOURNEY</Text>
+            <Text style={styles.helpIcon}>?</Text>
           </TouchableOpacity>
-        )}
 
-        {hasCompletedSetup && streak && (
-          <View style={styles.streakContainer}>
-            <Text style={styles.streakLabel}>Current Streak</Text>
-            <Text style={styles.streakValue}>{streak.currentStreak || 0} days</Text>
-            <TouchableOpacity
-              style={styles.viewCalendarButton}
-              onPress={() => navigation.navigate('Streak')}
-            >
-              <Text style={styles.viewCalendarText}>View Calendar</Text>
-            </TouchableOpacity>
+          <View style={styles.content}>
+
+          <Text style={styles.greeting}>HEY {userName.toUpperCase()}</Text>
+
+          <View style={styles.quoteContainer}>
+            <Text style={styles.quote}>{quote}</Text>
           </View>
-        )}
-
-        {hasCompletedSetup && (
           <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={handleLogProgress}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.ctaText}>LET'S LOG TODAY'S PROGRESS</Text>
-          </TouchableOpacity>
-        )}
+  style={styles.refreshQuoteButton}
+  onPress={handleChangeQuote}
+  activeOpacity={0.7}
+>
+  <Text style={styles.refreshQuoteText}>↻ Refresh Quote</Text>
+</TouchableOpacity>
+          {!hasCompletedSetup && (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={() => navigation.navigate('Setup')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.ctaText}>LET'S START OUR JOURNEY</Text>
+            </TouchableOpacity>
+          )}
 
-        {hasCompletedSetup && (
-          <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => navigation.navigate('Settings')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.settingsButtonText}>SETTINGS</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </SafeAreaView>
-    </ScreenWrapper> 
+          {hasCompletedSetup && streak && (
+            <View style={styles.streakContainer}>
+              <Text style={styles.streakLabel}>Current Streak</Text>
+              <Text style={styles.streakValue}>{streak.currentStreak || 0} days</Text>
+              <TouchableOpacity
+                style={styles.viewCalendarButton}
+                onPress={() => navigation.navigate('Streak')}
+              >
+                <Text style={styles.viewCalendarText}>View Calendar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {hasCompletedSetup && (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={handleLogProgress}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.ctaText}>LET'S LOG TODAY'S PROGRESS</Text>
+            </TouchableOpacity>
+          )}
+
+          {hasCompletedSetup && (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={() => navigation.navigate('Settings')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.settingsButtonText}>SETTINGS</Text>
+            </TouchableOpacity>
+          )}
+
+        </View>
+      </SafeAreaView>
+    </ScreenWrapper>
   );
 }
-
 
 const styles = StyleSheet.create({
   /* ============================
@@ -158,7 +217,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
 
-    marginBottom: SPACING.xl,
+    marginBottom:0,
 
     shadowColor: "#000",
     shadowOpacity: 0.4,
@@ -287,6 +346,70 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
+  changeQuoteButton: {
+  marginTop: SPACING.md,
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  borderRadius: BORDER_RADIUS.full,
+  backgroundColor: COLORS.surface,
+  borderWidth: 1,
+  borderColor: COLORS.borderLight,
+  alignItems:"center"
+},
+
+changeQuoteText: {
+  fontSize: 12,
+  fontWeight: "6000",
+  color: COLORS.accent,
+  letterSpacing: 0,
+},
+/* ============================
+   HELP BUTTON (Premium Floating)
+============================ */
+
+helpButton: {
+  position: "absolute",
+  top: 20,
+  right: 20,
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: COLORS.surfaceElevated,
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.15)",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 10,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.4,
+  shadowRadius: 10,
+  elevation: 8,
+},
+
+helpIcon: {
+  fontSize: 18,
+  fontWeight: "900",
+  color: COLORS.accent,
+},
+refreshQuoteButton: {
+  alignSelf: "center",
+  marginTop: SPACING.xs,
+  paddingVertical:5,
+  paddingHorizontal: 16,
+  borderRadius: 21,
+  backgroundColor: COLORS.surfaceElevated,
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.15)",
+  marginBottom:SPACING.xl,
+},
+
+refreshQuoteText: {
+  fontSize: 13,
+  fontWeight: "600",
+  color: COLORS.textMuted,
+  letterSpacing: 0.5,
+},
 });
 
 

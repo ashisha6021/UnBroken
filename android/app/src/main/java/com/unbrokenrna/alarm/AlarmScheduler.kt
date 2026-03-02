@@ -22,12 +22,7 @@ object AlarmScheduler {
     flags: Int
   ): PendingIntent? {
 
-    Log.d(TAG, "======================================")
-    Log.d(TAG, "buildPendingIntent() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "isCritical=$isCritical")
-    Log.d(TAG, "flags=$flags")
-    Log.d(TAG, "======================================")
+  
 
     val intent = Intent(context, AlarmReceiver::class.java).apply {
       action = "com.unbrokenrna.ALARM_$alarmId"
@@ -53,12 +48,7 @@ object AlarmScheduler {
   isCritical: Boolean
 ) {
 
-  Log.d(TAG, "======================================")
-  Log.d(TAG, "⏰ scheduleExact() CALLED")
-  Log.d(TAG, "alarmId=$alarmId")
-  Log.d(TAG, "triggerAt=${java.util.Date(triggerAt)}")
-  Log.d(TAG, "isCritical=$isCritical")
-  Log.d(TAG, "======================================")
+
 
   val alarmManager =
     context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -98,8 +88,6 @@ object AlarmScheduler {
     pendingIntent
   )
 
-  Log.d(TAG, "✅ Alarm scheduled SUCCESSFULLY (AlarmClock API)")
-  Log.d(TAG, "======================================")
 }
 
 
@@ -112,10 +100,7 @@ object AlarmScheduler {
     alarmId: String
   ) {
 
-    Log.d(TAG, "======================================")
-    Log.d(TAG, "❌ cancel() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "======================================")
+
 
     val alarmManager =
       context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -134,12 +119,12 @@ object AlarmScheduler {
     if (pendingIntent != null) {
       alarmManager.cancel(pendingIntent)
       pendingIntent.cancel()
-      Log.d(TAG, "✅ Alarm cancelled SUCCESSFULLY")
+    
     } else {
       Log.w(TAG, "⚠ No PendingIntent found → nothing cancelled")
     }
 
-    Log.d(TAG, "======================================")
+
   }
 
   /* ============================================================
@@ -153,13 +138,6 @@ fun scheduleSnooze(
   isCritical: Boolean
 ) {
 
-  Log.d(TAG, "======================================")
-  Log.d(TAG, "😴 scheduleSnooze() CALLED")
-  Log.d(TAG, "schedulerId=$schedulerId")
-  Log.d(TAG, "originalAlarmId=$originalAlarmId")
-  Log.d(TAG, "triggerAt=${java.util.Date(triggerAt)}")
-  Log.d(TAG, "isCritical=$isCritical")
-  Log.d(TAG, "======================================")
 
   val intent = Intent(context, AlarmReceiver::class.java).apply {
     action = "com.unbrokenrna.ALARM_$schedulerId"
@@ -177,7 +155,7 @@ fun scheduleSnooze(
   val alarmManager =
     context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-  // ✅ AlarmClock UI Intent (LOCKSCREEN GUARANTEE)
+ 
   val showIntent = Intent(context, AlarmActivity::class.java).apply {
     addFlags(
       Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -195,14 +173,12 @@ fun scheduleSnooze(
     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
   )
 
-  // ✅ Use AlarmClock API instead of ExactWhileIdle
+
   alarmManager.setAlarmClock(
     AlarmManager.AlarmClockInfo(triggerAt, showPendingIntent),
     pendingIntent
   )
 
-  Log.d(TAG, "✅ Snooze scheduled SUCCESSFULLY (AlarmClock API)")
-  Log.d(TAG, "======================================")
 }
 
 
@@ -215,20 +191,11 @@ fun scheduleSnooze(
     isCritical: Boolean
   ) {
 
-    Log.d(TAG, "======================================")
-    Log.d(TAG, "🔁 scheduleNextWeek() CALLED")
-    Log.d(TAG, "alarmId=$alarmId")
-    Log.d(TAG, "isCritical=$isCritical")
-    Log.d(TAG, "======================================")
 
     val nextWeek =
       System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
+   scheduleExact(context, alarmId, nextWeek, isCritical)
 
-    Log.d(TAG, "Next trigger = ${java.util.Date(nextWeek)}")
 
-    scheduleExact(context, alarmId, nextWeek, isCritical)
-
-    Log.d(TAG, "✅ Alarm rescheduled for next week")
-    Log.d(TAG, "======================================")
   }
 }
