@@ -13,29 +13,24 @@ export default function HomeScreen({ navigation }) {
   if (global.__ALARM_ACTIVE__) {
   return null; // ⛔ DO NOT render anything
 }
-  console.log('[HomeScreen] Component rendering...');
+ 
 
   const { user, isLoading, streak } = useAppStore();
   const [quote, setQuote] = useState('');
 
 useEffect(() => {
-  console.log('[HomeScreen] useEffect running...');
+ 
 
   const loadQuote = async () => {
     const q = await getDailyQuote();
-    console.log("This is the quote",q)
+   
     setQuote(q);
   };
 
   loadQuote();
 }, []);
 
-  // console.log("SCHEDULING DEBUG ALaRM") 
-  // scheduleDebugAlarm()
-  // console.log("DEBUG ALaRM SET")
-  console.log('[HomeScreen] isLoading:', isLoading);
-  console.log('[HomeScreen] user:', user);
-  console.log('[HomeScreen] streak:', streak);
+
 
   const handleLogProgress = () => {
     const hasCompletedSetup = user?.hasCompletedSetup === true;
@@ -47,7 +42,7 @@ useEffect(() => {
   };
 
   if (isLoading === true) {
-    console.log('[HomeScreen] Rendering loading screen...');
+    
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <ActivityIndicator size="large" color={COLORS.accent} />

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useAppStore } from '../../store/useAppStore';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '../../constants/theme';
 import { formatDateDisplay } from '../../utils/dateHelpers';
-import { useState,useRef } from "react";
+import { useState,useRef,useEffect } from "react";
 
 
 export default function LongGoalsList({ navigation }) {
@@ -16,24 +16,66 @@ export default function LongGoalsList({ navigation }) {
   const [expandedId, setExpandedId] = useState(null);
   const [overflowMap, setOverflowMap] = useState({});
   const titleMapRef = useRef({});
+  useEffect(() => {
+  const newMap = {};
+
+  longGoals.forEach(goal => {
+    const prevTitle = titleMapRef.current[goal.id];
+
+    if (prevTitle !== goal.title) {
+      newMap[goal.id] = undefined; // force recalculation
+      titleMapRef.current[goal.id] = goal.title;
+    }
+  });
+
+  if (Object.keys(newMap).length > 0) {
+    setOverflowMap(prev => {
+      const updated = { ...prev };
+      Object.keys(newMap).forEach(id => {
+        delete updated[id];
+      });
+      return updated;
+    });
+  }
+
+}, [longGoals]);
 
 const toggleExpand = (id) => {
   setExpandedId(prev => (prev === id ? null : id));
 };
 
-const detectOverflow = (e, id, title) => {
+// const detectOverflow = (e, id, title) => {
+//   const lines = e.nativeEvent?.lines;
+//   if (!lines) return;
+
+//   // If title changed -> reset overflow
+//   if (titleMapRef.current[id] !== title) {
+//     titleMapRef.current[id] = title;
+//     setOverflowMap(prev => {
+//       const updated = { ...prev };
+//       delete updated[id];
+//       return updated;
+//     });
+//   }
+
+//   if (overflowMap[id] !== undefined) return;
+
+//   const lastLine = lines[1]?.text || "";
+
+//   const cleaned = lastLine
+//     .replace(/[\u200B-\u200D\uFEFF]/g, "")
+//     .trim();
+
+//   const isOverflow =
+//     lines.length === 2 &&
+//     /…|\.\.\./.test(cleaned);
+
+//   setOverflowMap(prev => ({ ...prev, [id]: isOverflow }));
+// };
+
+const detectOverflow = (e, id) => {
   const lines = e.nativeEvent?.lines;
   if (!lines) return;
-
-  // If title changed -> reset overflow
-  if (titleMapRef.current[id] !== title) {
-    titleMapRef.current[id] = title;
-    setOverflowMap(prev => {
-      const updated = { ...prev };
-      delete updated[id];
-      return updated;
-    });
-  }
 
   if (overflowMap[id] !== undefined) return;
 
@@ -49,7 +91,6 @@ const detectOverflow = (e, id, title) => {
 
   setOverflowMap(prev => ({ ...prev, [id]: isOverflow }));
 };
-
   return (
     <>
  <View style={styles.headerRow}>
@@ -82,7 +123,8 @@ const detectOverflow = (e, id, title) => {
         style={styles.goalTitle}
         numberOfLines={isExpanded ? undefined : 2}
         ellipsizeMode="tail"
-        onTextLayout={(e) => detectOverflow(e, goal.id, goal.title)}
+        // onTextLayout={(e) => detectOverflow(e, goal.id, goal.title)}
+        onTextLayout={(e) => detectOverflow(e, goal.id)}
       >
           {goal.title}
         </Text>

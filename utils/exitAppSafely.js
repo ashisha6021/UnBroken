@@ -12,14 +12,7 @@ export async function exitAlarmSafely() {
   if (Platform.OS !== 'android') return;
 
   try {
-    console.log('=================================');
-    console.log('[exitAlarmSafely] EXIT requested');
-    console.log('[exitAlarmSafely] Calling native exitAppCompletely()...');
-    console.log('=================================');
-
-    await AlarmModule.exitAppCompletely();
-
-    console.log('[exitAlarmSafely] App exited successfully');
+  await AlarmModule.exitAppCompletely();
   } catch (e) {
     console.warn(
       '[exitAlarmSafely] Failed to exit app completely',

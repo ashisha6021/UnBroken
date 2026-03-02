@@ -28,7 +28,6 @@ export default function BrainGameHub() {
   }
 
   async function handleSuccess() {
-     console.log('✅ [BrainGameHub] Alarm completed');
     await completeAlarm({ alarmId });
     exitAlarmSafely();
   }

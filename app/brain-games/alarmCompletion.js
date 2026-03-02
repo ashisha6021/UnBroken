@@ -26,15 +26,7 @@ export async function completeAlarm({ alarmId }) {
   const time = alarm.time;
   const isCritical = alarm.isCritical;
 
-  console.log('[completeAlarm] Completing alarm:', {
-    alarmId,
-    taskId,
-    dayOfWeek,
-    time,
-    isCritical,
-  });
-
-  // ✅ Stop sound
+ // ✅ Stop sound
   await stopRinging();
 
   // ✅ Cancel current firing

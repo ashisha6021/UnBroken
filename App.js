@@ -31,18 +31,10 @@ useEffect(() => {
 
   async function checkLaunchIntent() {
 
-    console.log("=================================");
-    console.log("🔥 checkLaunchIntent() CALLED");
 
     const data = await AlarmModule.getLaunchIntentData();
-
-    console.log("LaunchIntentData =", data);
-    console.log("=================================");
-
     if (data?.alarmId) {
-
-      console.log("🚀 Alarm detected → Navigating");
-      resetToAlarm({ alarmId: data.alarmId });
+     resetToAlarm({ alarmId: data.alarmId });
     }
   }
 
@@ -51,11 +43,7 @@ useEffect(() => {
 
   // ✅ Notification Tap While App Running
   const sub = AppState.addEventListener("change", (state) => {
-
-    console.log("🔥 AppState changed:", state);
-
     if (state === "active") {
-      console.log("🔥 App became active → re-checking intent");
       checkLaunchIntent();
     }
   });
@@ -79,10 +67,8 @@ useEffect(() => {
 
     (async () => {
       try {
-        console.log("[App] Initializing database…");
+        
         await initDatabase();
-
-        console.log("[App] Database initialized, calling initializeApp()");
         await initializeApp();
       } catch (e) {
         console.error("[App] Init failed", e);

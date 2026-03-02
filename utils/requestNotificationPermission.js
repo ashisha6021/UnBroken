@@ -6,6 +6,6 @@ export async function requestNotificationPermission() {
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
     );
 
-    console.log('Notification permission:', result);
+   
   }
 }

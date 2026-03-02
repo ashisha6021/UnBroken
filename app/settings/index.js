@@ -14,7 +14,7 @@ import TasksScreen from '../setup/tasks';
 export default function SettingsScreen({ navigation }) {
   const { user, longGoals: storeLongGoals, shortGoals, streak,tasks,taskAlarms } = useAppStore();
   const [longGoals, setLongGoals] = useState(storeLongGoals);
- console.log("THis is alarm data",taskAlarms)
+ 
   // Sync store → local state
   useEffect(() => {
     setLongGoals(storeLongGoals);

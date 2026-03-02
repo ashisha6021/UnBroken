@@ -6,7 +6,7 @@ import {
   Switch,
   ScrollView,
   StyleSheet,
-  Alert,
+  Alert,AppState
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -73,6 +73,22 @@ export default function AlarmScreen() {
   const [showTimeConflictModal, setShowTimeConflictModal] = useState(false);
 
    const allTaskAlarms = useAppStore((s) => s.taskAlarms);
+
+  useEffect(() => {
+  const sub = AppState.addEventListener("change", async (state) => {
+    if (state === "active" && pendingAlarmAction) {
+      const allowed = await canScheduleExactAlarms();
+
+      if (allowed) {
+        const action = pendingAlarmAction;
+        setPendingAlarmAction(null);
+        action();
+      }
+    }
+  });
+
+  return () => sub.remove();
+}, [pendingAlarmAction]);
   // --------------------
   // LOAD ALARMS
   // --------------------
@@ -240,7 +256,7 @@ const handleSingleTime = async (day, _, date) => {
 
     await dbUpdateTaskAlarm(updated);
     updateAlarmInStore(taskId, updated);
-    console.log("THIS ISS UPDATED DATA...",updated)
+  
     // 🔔 ONLY reschedule if alarm is already enabled
     if (updated.enabled) {
       await cancelAlarm(updated.id);
@@ -385,10 +401,12 @@ if (!alarm.enabled) {
 
   const allowed = await canScheduleExactAlarms();
   if (!allowed) {
+  if (!showAlarmPermission) {
     setPendingAlarmAction(() => () => toggleEnabled(day));
     setShowAlarmPermission(true);
-    return;
   }
+  return;
+}
 }
 
   const updated = {
@@ -596,10 +614,7 @@ if (!alarm.enabled) {
     setShowAlarmPermission(false);
     await requestExactAlarmPermission();
 
-    if (pendingAlarmAction) {
-      await pendingAlarmAction();
-      setPendingAlarmAction(null);
-    }
+   
   }}
 />
 

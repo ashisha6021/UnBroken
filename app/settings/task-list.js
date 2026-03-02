@@ -23,6 +23,48 @@ export default function TaskList({ navigation }) {
   const taskTitleMapRef = useRef({});
 const shortTitleMapRef = useRef({});
 
+useEffect(() => {
+  const updated = {};
+
+  shortGoals.forEach(goal => {
+    const prev = shortTitleMapRef.current[goal.id];
+
+    if (prev !== goal.title) {
+      shortTitleMapRef.current[goal.id] = goal.title;
+      updated[goal.id] = true;
+    }
+  });
+
+  if (Object.keys(updated).length > 0) {
+    setShortOverflow(prev => {
+      const copy = { ...prev };
+      Object.keys(updated).forEach(id => delete copy[id]);
+      return copy;
+    });
+  }
+}, [shortGoals]);
+
+useEffect(() => {
+  const updated = {};
+
+  tasks.forEach(task => {
+    const prev = taskTitleMapRef.current[task.id];
+
+    if (prev !== task.name) {
+      taskTitleMapRef.current[task.id] = task.name;
+      updated[task.id] = true;
+    }
+  });
+
+  if (Object.keys(updated).length > 0) {
+    setTaskOverflow(prev => {
+      const copy = { ...prev };
+      Object.keys(updated).forEach(id => delete copy[id]);
+      return copy;
+    });
+  }
+}, [tasks]);
+
 
 
   const toggleExpand = (id) => {
@@ -34,22 +76,13 @@ const shortTitleMapRef = useRef({});
       [id]: !prev[id]
     }));
   };
-const detectOverflow = (e, id, title, setter, store, titleRef, isExpanded) => {
+const detectOverflow = (e, id, setter, store, isExpanded) => {
   const lines = e.nativeEvent?.lines;
   if (!lines) return;
 
-  // Reset only if title changed
-  if (titleRef.current[id] !== title) {
-    titleRef.current[id] = title;
+  if (store[id] !== undefined) return;
 
-    setter(prev => {
-      const updated = { ...prev };
-      delete updated[id];
-      return updated;
-    });
-  }
-
-  // ❗ DO NOT calculate overflow while expanded
+  // ❗ Skip when expanded
   if (isExpanded) return;
 
   const lastLine = lines[1]?.text || "";
@@ -62,10 +95,7 @@ const detectOverflow = (e, id, title, setter, store, titleRef, isExpanded) => {
     lines.length === 2 &&
     /…|\.\.\./.test(cleaned);
 
-  setter(prev => {
-    if (prev[id] === isOverflow) return prev;
-    return { ...prev, [id]: isOverflow };
-  });
+  setter(prev => ({ ...prev, [id]: isOverflow }));
 };
 
   const handleLastTaskLayout = () => {
@@ -136,10 +166,8 @@ const detectOverflow = (e, id, title, setter, store, titleRef, isExpanded) => {
                     detectOverflow(
                       e,
                       goal.id,
-                      goal.title,
                       setShortOverflow,
                       shortOverflow,
-                      shortTitleMapRef,
                       expandedShortTitle[goal.id]
                     )
                   }
@@ -220,10 +248,8 @@ const detectOverflow = (e, id, title, setter, store, titleRef, isExpanded) => {
                               detectOverflow(
                                 e,
                                 task.id,
-                                task.name,
                                 setTaskOverflow,
                                 taskOverflow,
-                                taskTitleMapRef,
                                 expandedTaskTitle[task.id]
                               )
                             }

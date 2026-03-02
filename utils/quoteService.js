@@ -9,15 +9,14 @@ const QUOTE_API = "https://zenquotes.io/api/random";
 
 export const getDailyQuote = async () => {
   try {
-    // ✅ Check cache
+  
     const savedQuote = await AsyncStorage.getItem(QUOTE_KEY);
     const savedDate = await AsyncStorage.getItem(QUOTE_DATE_KEY);
 
     const today = new Date().toDateString();
 
     if (savedQuote && savedDate === today) {
-        console.log("THIS IS QUOTE",savedQuote)
-      return savedQuote;
+       return savedQuote;
     }
     
     // ✅ Check internet

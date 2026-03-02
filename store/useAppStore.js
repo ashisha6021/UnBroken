@@ -32,7 +32,7 @@ export const useAppStore = create((set, get) => ({
   // INITIALIZATION
   // --------------------
   initializeApp: async () => {
-    console.log('[Store] initializeApp called');
+    
     if (isInitializing && initPromise) {
       return initPromise;
     }

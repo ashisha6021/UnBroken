@@ -93,8 +93,7 @@ export default function LogScreen() {
 
     // 🔥 recalc once per short goal
     for (const shortGoalId of affectedShortGoals) {
-      console.log("THiS IS SHort% completion",await handleTaskLogProgress(shortGoalId))
-      await handleTaskLogProgress(shortGoalId);
+        await handleTaskLogProgress(shortGoalId);
     }
 
     await refreshData();

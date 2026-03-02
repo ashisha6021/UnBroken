@@ -116,7 +116,7 @@ const toggleExpand = (id) => {
 
     if (y !== undefined && scrollRef.current) {
       scrollRef.current.scrollTo({
-        y: y +20,
+        y: y +100,
         animated: true,
       });
     }

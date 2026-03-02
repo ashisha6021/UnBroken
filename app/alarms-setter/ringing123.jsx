@@ -28,14 +28,7 @@ export default function AlarmRingingScreen() {
      1️⃣ GET alarmId FROM ROUTE
   ============================================================ */
   const alarmId = route.params?.alarmId;
-
-  console.log('\n======================================');
-  console.log('🔥 AlarmRingingScreen MOUNTED');
-  console.log('route.params =', route.params);
-  console.log('alarmId =', alarmId);
-  console.log('======================================\n');
-
-  /* ============================================================
+ /* ============================================================
      2️⃣ LOAD FULL ALARM DATA FROM REALM
      (DB is source of truth)
   ============================================================ */
@@ -59,19 +52,12 @@ export default function AlarmRingingScreen() {
         time = alarm.time;
         isCritical = alarm.isCritical;
 
-        console.log('✅ Alarm Loaded From Realm:', {
-          taskId,
-          dayOfWeek,
-          time,
-          isCritical,
-        });
-
         alarmSettings = realm.objectForPrimaryKey(
           'alarm_settings',
           taskId
         );
 
-        console.log('✅ Alarm Settings Loaded:', alarmSettings);
+        
       }
     }
   } catch (e) {
@@ -107,15 +93,10 @@ export default function AlarmRingingScreen() {
       ? alarmSettings.snoozeMinutes
       : 5;
 
-  console.log('🧠 requireBrainGame =', requireBrainGame);
-  console.log('😴 snoozeMinutes =', snoozeMinutes);
-
   /* ============================================================
      5️⃣ BLOCK BACK BUTTON ALWAYS
   ============================================================ */
   useEffect(() => {
-    console.log('🚫 Blocking Android back button');
-
     const sub = BackHandler.addEventListener(
       'hardwareBackPress',
       () => true
@@ -132,11 +113,7 @@ export default function AlarmRingingScreen() {
      - Exit AlarmActivity safely
   ============================================================ */
   const stopAlarm = useCallback(async () => {
-    console.log('\n======================================');
-    console.log('🛑 STOP BUTTON PRESSED');
-    console.log('======================================');
-
-    if (requireBrainGame) {
+   if (requireBrainGame) {
       console.warn('❌ Stop blocked → BrainGame required');
       return;
     }
@@ -149,27 +126,20 @@ export default function AlarmRingingScreen() {
     actionLockedRef.current = true;
 
     try {
-      console.log('➡ Stopping ringing sound...');
+      
       await stopRinging();
-
-      console.log('➡ Cancelling current alarm...');
       await cancelAlarm(alarmId);
-
-      console.log('➡ Scheduling next week alarm...');
       await scheduleAlarm({
         alarmId,
         dayOfWeek,
         time,
         isCritical,
       });
-
-      console.log('✅ Alarm stopped + rescheduled successfully');
-
-    } catch (e) {
+} catch (e) {
       console.error('❌ Stop alarm failed:', e);
 
     } finally {
-      console.log('➡ Closing AlarmActivity safely...');
+      
       exitAlarmSafely();
     }
   }, [alarmId, dayOfWeek, time, isCritical, requireBrainGame]);
@@ -178,10 +148,6 @@ export default function AlarmRingingScreen() {
      7️⃣ SNOOZE (ONLY NON-CRITICAL)
   ============================================================ */
   const onSnoozePress = useCallback(async () => {
-    console.log('\n======================================');
-    console.log('😴 SNOOZE BUTTON PRESSED');
-    console.log('======================================');
-
     if (requireBrainGame || isCritical) {
       console.warn('❌ Snooze blocked → Critical alarm');
       return;
@@ -195,19 +161,15 @@ export default function AlarmRingingScreen() {
     actionLockedRef.current = true;
 
     try {
-      console.log('➡ Scheduling snooze...');
       await snoozeAlarm({
         alarmId,
         snoozeMinutes,
       });
-
-      console.log('✅ Snooze scheduled successfully');
-
-    } catch (e) {
+     } catch (e) {
       console.error('❌ Snooze failed:', e);
 
     } finally {
-      console.log('➡ Closing AlarmActivity safely...');
+      
       exitAlarmSafely();
     }
   }, [alarmId, snoozeMinutes, requireBrainGame, isCritical]);
@@ -216,9 +178,7 @@ export default function AlarmRingingScreen() {
      8️⃣ START BRAIN GAME (Critical Only)
   ============================================================ */
   const startBrainGame = useCallback(() => {
-    console.log('🧠 START BRAIN GAME pressed → Navigating...');
-
-    navigation.replace('BrainGameHub', {
+     navigation.replace('BrainGameHub', {
       taskId,
       alarmId,
     });

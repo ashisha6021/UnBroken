@@ -21,6 +21,47 @@ const longTitleMapRef = useRef({});
   const lastShortRef = useRef(null);
   const scrollTarget = useRef(null);
   const scrollViewHeight = useRef(0);
+  useEffect(() => {
+  const updated = {};
+
+  shortGoals.forEach(goal => {
+    const prev = shortTitleMapRef.current[goal.id];
+
+    if (prev !== goal.title) {
+      shortTitleMapRef.current[goal.id] = goal.title;
+      updated[goal.id] = true;
+    }
+  });
+
+  if (Object.keys(updated).length > 0) {
+    setShortOverflow(prev => {
+      const copy = { ...prev };
+      Object.keys(updated).forEach(id => delete copy[id]);
+      return copy;
+    });
+  }
+}, [shortGoals]);
+
+useEffect(() => {
+  const updated = {};
+
+  longGoals.forEach(goal => {
+    const prev = longTitleMapRef.current[goal.id];
+
+    if (prev !== goal.title) {
+      longTitleMapRef.current[goal.id] = goal.title;
+      updated[goal.id] = true;
+    }
+  });
+
+  if (Object.keys(updated).length > 0) {
+    setLongOverflow(prev => {
+      const copy = { ...prev };
+      Object.keys(updated).forEach(id => delete copy[id]);
+      return copy;
+    });
+  }
+}, [longGoals]);
  
 
 
@@ -43,7 +84,7 @@ const longTitleMapRef = useRef({});
         (x, y, width, height) => {
 
           const visibleHeight = scrollViewHeight.current;
-          const targetScroll = y + height - visibleHeight + 40;
+          const targetScroll = y + height - visibleHeight + 50;
 
           scrollRef.current.scrollTo({
             y: targetScroll > 0 ? targetScroll : 0,
@@ -56,20 +97,9 @@ const longTitleMapRef = useRef({});
       );
     }, 80);
   };
-const detectOverflow = (e, id, title, setter, store, titleRef) => {
+const detectOverflow = (e, id, setter, store) => {
   const lines = e.nativeEvent?.lines;
   if (!lines) return;
-
-  // Reset when title changes
-  if (titleRef.current[id] !== title) {
-    titleRef.current[id] = title;
-
-    setter(prev => {
-      const updated = { ...prev };
-      delete updated[id];
-      return updated;
-    });
-  }
 
   if (store[id] !== undefined) return;
 
@@ -133,11 +163,9 @@ const detectOverflow = (e, id, title, setter, store, titleRef) => {
                           detectOverflow(
                             e,
                             longGoal.id,
-                            longGoal.title,
                             setLongOverflow,
                             longOverflow,
-                            longTitleMapRef
-                          )
+                       )
                         }
                   >
                     {longGoal.title}
@@ -185,7 +213,7 @@ const detectOverflow = (e, id, title, setter, store, titleRef) => {
 
                 return (
                   <View
-          key={goal.id + goal.title}
+                    key={goal.id + goal.title}
                     ref={isLast ? lastShortRef : null}
                     onLayout={isLast ? handleLastShortLayout : undefined}
                     style={styles.shortGoalCard}
@@ -211,10 +239,8 @@ const detectOverflow = (e, id, title, setter, store, titleRef) => {
                           detectOverflow(
                             e,
                             goal.id,
-                            goal.title,
                             setShortOverflow,
                             shortOverflow,
-                            shortTitleMapRef
                           )
                         }
                       >

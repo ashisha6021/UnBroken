@@ -172,20 +172,6 @@ export const deleteDatabase = async () => {
 
 export const initDatabase = async () => {
   if (realm) return getDatabase();
-
-  /**
-   * 🔥 DEV ONLY RESET
-   * Uncomment this while migrating / debugging
-   * ❌ DO NOT keep enabled in production
-   */
-  // try{ 
-  //   console.log("DELETING DB")
-  //   await deleteDatabase();
-  //   console.log("DB DELETED")
-  // }catch(e){
-  //   console.error('DB Deletion error:', e)
-  // };
-
   realm = await Realm.open({
     schema: [
       UserSchema,
@@ -202,8 +188,6 @@ export const initDatabase = async () => {
     ],
     schemaVersion: 1,
   });
-
-  console.log('[Database] Realm initialized');
   return getDatabase();
 };
 
