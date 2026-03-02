@@ -217,10 +217,13 @@
     },
 
     confirmText: {
-      fontSize: 14,
+      paddingHorizontal:3,
+      fontSize: 13,
       fontWeight: "900",
       color: COLORS.background,
+     
+
       textTransform: "uppercase",
-      letterSpacing: 1,
+      letterSpacing:0,
     },
   });

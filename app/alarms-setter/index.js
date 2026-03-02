@@ -344,7 +344,7 @@ const setAlarmType = async (alarm, isCritical) => {
 const confirmCritical = (alarm) => {
   showConfirm(
     "Critical Alarm ⚠️",
-    "This alarm will ring continuously and require a brain game.",
+    "This alarm will ring continuously and require a brain game to stop.",
     "Cancel",
     "Make Critical",
     "warning", // ✅ type comes here
@@ -460,7 +460,7 @@ if (!alarm.enabled) {
   contentContainerStyle={{ paddingBottom: 20}}
 >
 
-        <Text style={styles.title}>Alarm for Task</Text>
+        <Text style={styles.title}>ALARM FOR TASK</Text>
 
         <View style={styles.nameContainer}>
           <Text style={styles.taskName}>{task.name}</Text>
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: BORDER_RADIUS.full,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
 
   taskName: {
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: BORDER_RADIUS.full,
     alignItems: "center",
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
 
   applyText: {

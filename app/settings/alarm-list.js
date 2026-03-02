@@ -107,7 +107,7 @@ export default function AlarmListScreen({ navigation }) {
         taskId
       }))
   );
-
+  const hasAnyActiveAlarm = allAlarms.length > 0;
   const alarmsByDay = days.reduce((acc, day) => {
     const dayKey = day.toLowerCase();
     const activeAlarms = allAlarms.filter(
@@ -131,17 +131,20 @@ export default function AlarmListScreen({ navigation }) {
       <View style={styles.headerRow}>
         <Text style={styles.headerText}>Active Alarms</Text>
 
-        <TouchableOpacity
+       <TouchableOpacity
+          disabled={!hasAnyActiveAlarm}
           style={[
             styles.manageToggle,
-            manageMode && styles.manageToggleActive
+            manageMode && styles.manageToggleActive,
+            !hasAnyActiveAlarm && styles.manageToggleDisabled
           ]}
           onPress={() => setManageMode(!manageMode)}
         >
-          <Text style={[
-            styles.manageToggleText,
-            manageMode && styles.manageToggleTextActive
-          ]}>
+         <Text style={[
+          styles.manageToggleText,
+          manageMode && styles.manageToggleTextActive,
+          !hasAnyActiveAlarm && styles.manageToggleTextDisabled
+        ]}>
             {manageMode ? "DONE" : "Disable"}
           </Text>
         </TouchableOpacity>
@@ -435,6 +438,15 @@ disableDayText:{
   fontSize:11,
   fontWeight:"900",
   color:"#ff4d4d"
-}
+},
+manageToggleDisabled: {
+  backgroundColor: "rgba(255,255,255,0.04)",
+  borderColor: "rgba(255,255,255,0.12)",
+  opacity: 0.4,
+},
+
+manageToggleTextDisabled: {
+  color: COLORS.textMuted,
+},
 
 });

@@ -10,6 +10,8 @@ import {
   onNavigationReady,
   resetToAlarm,
 } from "./navigation/navigationRef";
+import AppToast from "./components/AppToast";
+import { useToast } from "./store/useToast";
 
 import { requestNotificationPermission } from "./utils/requestNotificationPermission";
 import { useAppStore } from "./store/useAppStore";
@@ -24,6 +26,7 @@ export default function App() {
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [alarmOverride, setAlarmOverride] = useState(false);
+  const { message, visible } = useToast(); 
 
 
 
@@ -37,11 +40,7 @@ useEffect(() => {
      resetToAlarm({ alarmId: data.alarmId });
     }
   }
-
-  // ✅ Cold Start
-  checkLaunchIntent();
-
-  // ✅ Notification Tap While App Running
+   checkLaunchIntent();
   const sub = AppState.addEventListener("change", (state) => {
     if (state === "active") {
       checkLaunchIntent();
@@ -52,16 +51,11 @@ useEffect(() => {
 
 }, []);
 
-
-
-  // ✅ Ask permission only for normal launches
   useEffect(() => {
     if (!alarmOverride) {
       requestNotificationPermission();
     }
   }, [alarmOverride]);
-
-  // ✅ App initialization
   useEffect(() => {
     let mounted = true;
 
@@ -81,8 +75,6 @@ useEffect(() => {
       mounted = false;
     };
   }, []);
-
-  // ✅ Loader bypass for alarm launch
   if ((!isInitialized || isLoading) && !alarmOverride) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -98,6 +90,7 @@ useEffect(() => {
         <RootStack />
       </NavigationContainer>
       <PremiumAlertHost />
+      <AppToast message={message} visible={visible} />
     </>
   );
 }

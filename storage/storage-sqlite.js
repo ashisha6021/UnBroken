@@ -559,6 +559,7 @@ export const dbUpdateTaskAlarm = async (alarm) => {
     existing.dayOfWeek = String(alarm.dayOfWeek);
     existing.time = String(alarm.time);
     existing.enabled = Boolean(alarm.enabled);
+    existing.isCritical = Boolean(alarm.isCritical);
   });
 };
 

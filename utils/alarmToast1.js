@@ -1,10 +1,6 @@
-import { Platform, ToastAndroid, Alert } from 'react-native';
-
+import { useToast } from "../store/useToast";
 
 export function showAlarmToast1(message) {
-  if (Platform.OS === 'android') {
-    ToastAndroid.show(message, ToastAndroid.SHORT);
-  } else {
-    Alert.alert('Alarm', message);
-  }
+  const { showToast } = useToast.getState();
+  showToast(message);
 }
